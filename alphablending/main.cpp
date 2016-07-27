@@ -11,14 +11,19 @@
 
 #include "vec3f.h"
 #include "cube.h"
+#include "ball.h"
 
 using namespace std;
 
 //const float GRAVITY = 8.0f;
-
 const float PI = 3.1415926535f;
 const float BOX_SIZE = 12.0f; //The length of each side of the cube
 const float ALPHA = 0.6f; //The opacity of each face of the cube
+
+//Returns a random float from 0 to < 1
+float randomFloat() {
+	return (float)rand() / ((float)RAND_MAX + 1);
+}
 
 void handleResize(int w, int h) {
 	glViewport(0, 0, w, h);
@@ -41,9 +46,37 @@ void initRendering() {
 	
 	glEnable(GL_BLEND); //Enable alpha blending
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //Set the blend function
+	glEnable(GL_CULL_FACE);
+	
 	
 }
-Cube _cube; //The cube
+void drawAxes(void)
+{
+ 
+    /*  Length of axes */
+    double len = 2.0;
+    
+    glDisable(GL_LIGHTING);
+	glColor3f(1,1,1);
+      
+	glBegin(GL_LINES);
+	glVertex3d(0,0,0);
+	glVertex3d(len,0,0);
+	glVertex3d(0,0,0);
+	glVertex3d(0,len,0);
+	glVertex3d(0,0,0);
+	glVertex3d(0,0,len);
+	glEnd();
+    /*  Label axes */
+	glRasterPos3d(len,0,0);
+	
+	glRasterPos3d(0,len,0);
+	
+	glRasterPos3d(0,0,len);
+   
+     glEnable(GL_LIGHTING);
+  
+}
 
 GLfloat ambientLight[] = {0.5f, 0.5f, 0.5f, 1.0f};
 GLfloat lightColor[] = {0.7f, 0.7f, 0.7f, 1.0f};
@@ -57,6 +90,21 @@ void TurnOnLight(){
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 }
 
+const float TIME_BETWEEN_UPDATES = 0.001f;
+const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
+float _angle = 0.0f; //kako cemo vrtiti sve ako se kocka vrti sama?
+
+Cube _cube; //The cube
+
+void update(int value) {
+  
+	rotate(_cube, Vec3f(0, 1, 0), 1);
+  	glutPostRedisplay();
+	glutTimerFunc(TIMER_MS, update, 0);
+}
+
+
+vector<Ball*> _balls; //All of the balls in play
 void drawScene() {
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -69,7 +117,7 @@ void drawScene() {
 	gluLookAt ( 0.0, 0, 10.0, // camera
 		    0.0, 0.0, 0.0, // where
 		    0.0f, 3.0f, 0.0f ); // up vector
-
+  
 	glTranslatef(0.0f, 0.0f, -20.0f);
 	
 	TurnOnLight();
@@ -78,21 +126,32 @@ void drawScene() {
 	glTranslatef(-2 * BOX_SIZE, BOX_SIZE, 4 * BOX_SIZE);
 	glutSolidSphere(1,10,10);
       glPopMatrix();
+
+	drawAxes();
+	
+	
+      /*
+	for(unsigned int i = 0; i < _balls.size(); i++) {
+		Ball* ball = _balls[i];
+		glPushMatrix();
+		glTranslatef(ball->pos[0], ball->pos[1], ball->pos[2]);
+		//glColor3f(ball->color[0], ball->color[1], ball->color[2]);
+		glColor3f(1,1,1);
+		glutSolidSphere(ball->r, 12, 12); //Draw a sphere
+		glPopMatrix();
+	}
+	*/
 	
 	drawCube(_cube); //in cube.cpp
-	
+
+	//Draw the ballsy
+      
+      
 	glutSwapBuffers();
 	
 }
 
-const float TIME_BETWEEN_UPDATES = 0.001f;
-const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
 
-void update(int value) {
-	rotate(_cube, Vec3f(0, 1, 0), 1);
-	glutPostRedisplay();
-	glutTimerFunc(TIMER_MS, update, 0);
-}
 
 int main(int argc, char** argv) {
   
