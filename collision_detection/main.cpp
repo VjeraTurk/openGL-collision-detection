@@ -17,7 +17,7 @@ float randomFloat() {
 	return (float)rand() / ((float)RAND_MAX + 1);
 }
 
-const float GRAVITY = 8.0f;
+const float GRAVITY =  9.80665f;
 const float BOX_SIZE = 12.0f; //The length of one side of the box
 //The amount of time between each time that we handle collisions and apply the
 //effects of gravity
@@ -66,12 +66,12 @@ class Octree {
 		Octree *children[2][2][2];
 		//Whether this has children
 		bool hasChildren;
-		//The balls in this, if this doesn't have any children
-	
-      private:	
-		set<Ball*> balls;
 		//The depth of this in the tree
 		int depth;
+	
+      private:	//The balls in this, if this doesn't have any children
+		set<Ball*> balls;
+		
 		//The number of balls in this, including those stored in its children
 		int numBalls;
 		
@@ -383,8 +383,22 @@ void drawOctree(Octree* octree, float box_size){
       {
 	glPushMatrix();
 	glDisable(GL_LIGHTING);
-	
-	glColor3f(1,0,0);
+	//cout<< octree->depth/10;
+	switch(octree->depth){
+	 
+	  case 1: glColor3f(1.0f,1.0f,1.0f);
+		  break;
+	  case 2: glColor3f(1.0f,0.0f,0.0f);
+		  break;
+	  case 3: glColor3f(0.0f,1.0f,0.0f);
+		  break;
+	  case 4: glColor3f(0.0f,0.7f,1.0f);
+		  break;
+	  case 5: glColor3f(1.0f,1.0f,0.0f);
+		  break;
+	  case 6: glColor3f(1.0f,0.0f,1.0f);
+		  break;
+	}
 	glTranslatef(octree->center[0], octree->center[1], octree->center[2]);
 	glutWireCube(box_size);
 	glEnable(GL_LIGHTING);
@@ -399,7 +413,7 @@ void potentialBallBallCollisions(vector<BallPair> &potentialCollisions,
 								 vector<Ball*> &balls, Octree* octree) {
 	//Fast method
 	octree->potentialBallBallCollisions(potentialCollisions);
-	
+	//cout << potentialCollisions.size() << '\n';
 	/*
 	//Slow method
 	for(unsigned int i = 0; i < balls.size(); i++) {
@@ -578,7 +592,7 @@ void cleanup() {
 	}
 	delete _octree;
 }
-
+int pause = 1;
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
@@ -601,6 +615,11 @@ void handleKeypress(unsigned char key, int x, int y) {
 				_balls.push_back(ball);
 				_octree->add(ball);
 			} break;
+		case 'n': _timeUntilUpdate=1;
+			  break;
+		case 'p': if(pause==1) pause=0;
+			  else if(pause==0) pause=1;
+			  break;
 	
 	}
 }
@@ -618,10 +637,10 @@ void initRendering() {
 	glCullFace(GL_FRONT);
 	
 	//uncomment for Transparent Cube: 
-	/*
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	*/
+	
 }
 
 void handleResize(int w, int h) {
@@ -667,7 +686,7 @@ void drawScene() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	
-	glTranslatef(0.0f, 0.0f, -20.0f);
+	glTranslatef(0.0f, 0.0f, -25.0f);
 	
 	Lightning(); //svjetlo ne rotira
 	
@@ -698,6 +717,7 @@ void drawScene() {
 
 //Called every TIMER_MS milliseconds
 void update(int value) {
+	if(pause){
 	advance(_balls, _octree, (float)TIMER_MS / 1000.0f, _timeUntilUpdate);
 	_angle += (float)TIMER_MS / 100;
 	if (_angle > 360) {
@@ -705,6 +725,9 @@ void update(int value) {
 	}
 	
 	glutPostRedisplay();
+	  
+	  
+	}
 	glutTimerFunc(TIMER_MS, update, 0);
 }
 
@@ -715,7 +738,7 @@ int main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowPosition(500, 100);
 	
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(600, 600);
 	
 	glutCreateWindow("Collision Detection");
 	initRendering();
