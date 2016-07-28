@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -Wall
 PROG = collisions
 
-SRCS = main.cpp imageloader.cpp vec3f.cpp cube.cpp
+SRCS = main.cpp  vec3f.cpp cube.cpp
 
 ifeq ($(shell uname),Darwin)
 	LIBS = -framework OpenGL -framework GLUT

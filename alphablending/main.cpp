@@ -141,9 +141,11 @@ void drawScene() {
 		glPopMatrix();
 	}
 	*/
+	//glCullFace(GL_FRONT);
+	//glCullFace(GL_BACK);
 	
 	drawCube(_cube); //in cube.cpp
-
+	
 	//Draw the ballsy
       
       

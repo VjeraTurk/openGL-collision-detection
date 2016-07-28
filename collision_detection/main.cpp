@@ -52,7 +52,7 @@ const int MAX_BALLS_PER_OCTREE = 6;
 
 //Our data structure for making collision detection faster
 class Octree {
-	private:
+      public:
 		Vec3f corner1; //(minX, minY, minZ)
 		Vec3f corner2; //(maxX, maxY, maxZ)
 		Vec3f center;//((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2)
@@ -67,6 +67,8 @@ class Octree {
 		//Whether this has children
 		bool hasChildren;
 		//The balls in this, if this doesn't have any children
+	
+      private:	
 		set<Ball*> balls;
 		//The depth of this in the tree
 		int depth;
@@ -360,7 +362,37 @@ class Octree {
 			potentialBallWallCollisions(collisions, WALL_NEAR, 'z', 1);
 		}
 };
+  
+float box_size= BOX_SIZE;
+void drawOctree(Octree* octree, float box_size){
 
+      if (octree->hasChildren)
+      {  
+	 for(unsigned int i=0;i<2;i++){
+	    for(unsigned int j=0;j<2;j++){
+		for(unsigned int k=0;k<2;k++){
+	
+	    drawOctree(octree->children[i][j][k], box_size/2);
+	    
+		}
+	    }
+	}
+      
+      }
+      else if(!octree->hasChildren)
+      {
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	
+	glColor3f(1,0,0);
+	glTranslatef(octree->center[0], octree->center[1], octree->center[2]);
+	glutWireCube(box_size);
+	glEnable(GL_LIGHTING);
+	
+	glPopMatrix();
+      }
+  
+}
 //Puts potential ball-ball collisions in potentialCollisions.  It must return
 //all actual collisions, but it need not return only actual collisions.
 void potentialBallBallCollisions(vector<BallPair> &potentialCollisions,
@@ -554,7 +586,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 			exit(0);
 		case ' ':
 			//Add 20 balls with a random position, velocity, radius, and color
-			for(int i = 0; i < 20; i++) {
+			for(int i = 0; i < 10; i++) {
 				Ball* ball = new Ball();
 				ball->pos = Vec3f(8 * randomFloat() - 4,
 								  8 * randomFloat() - 4,
@@ -609,9 +641,7 @@ void drawBalls(){
 		glPopMatrix();
 	}
 	
-}	GLfloat lightPosX =0;
-	GLfloat lightPosY =0;
-	GLfloat lightPosZ =0;
+}	
 void Lightning(){
 	
 	GLfloat ambientColor[] = {0.5f, 0.5f, 0.5f, 1.0f};
@@ -646,6 +676,7 @@ void drawScene() {
 	
 	glShadeModel(GL_SMOOTH);
 	drawCube();
+	drawOctree(_octree, box_size);
 	drawBalls();
 	
 	//uncomment for Transparent Cube:
@@ -682,7 +713,9 @@ int main(int argc, char** argv) {
 	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(400, 400);
+	glutInitWindowPosition(500, 100);
+	
+	glutInitWindowSize(500, 500);
 	
 	glutCreateWindow("Collision Detection");
 	initRendering();

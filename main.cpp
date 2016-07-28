@@ -13,11 +13,10 @@
 using namespace std;
 
 //Returns a random float from 0 to < 1
-/*
+
 float randomFloat() {
 	return (float)rand() / ((float)RAND_MAX + 1);
 }
-*/
 
 //const float GRAVITY = 8.0f;
 const float BOX_SIZE = 12.0f; //The length of one side of the box
@@ -25,7 +24,7 @@ const float BOX_SIZE = 12.0f; //The length of one side of the box
 //effects of gravity
 const float TIME_BETWEEN_UPDATES = 0.001f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
-/*
+
 //Stores information regarding a ball
 struct Ball {
 	Vec3f v; //Velocity
@@ -47,14 +46,14 @@ struct BallWallPair {
 	Ball* ball;
 	Wall wall;
 };
-*/
+
 
 const int MAX_OCTREE_DEPTH = 6;
 const int MIN_BALLS_PER_OCTREE = 3;
 const int MAX_BALLS_PER_OCTREE = 6;
 
 //Our data structure for making collision detection faster
-/*
+
 class Octree {
 	private:
 		Vec3f corner1; //(minX, minY, minZ)
@@ -364,7 +363,7 @@ class Octree {
 			potentialBallWallCollisions(collisions, WALL_NEAR, 'z', 1);
 		}
 };
-*/
+
 
 //Puts potential ball-ball collisions in potentialCollisions.  It must return
 //all actual collisions, but it need not return only actual collisions.
@@ -624,21 +623,21 @@ void drawAxes(void)
     /*  Length of axes */
     double len = 2.0;
     glDisable(GL_LIGHTING);
-    //glColor3fv(white);
-    glBegin(GL_LINES);
-    glVertex3d(0,0,0);
-    glVertex3d(len,0,0);
-    glVertex3d(0,0,0);
-    glVertex3d(0,len,0);
-    glVertex3d(0,0,0);
-    glVertex3d(0,0,len);
-    glEnd();
-    /*  Label axes */
-    glRasterPos3d(len,0,0);
-    
-    glRasterPos3d(0,len,0);
-    
-    glRasterPos3d(0,0,len);
+	//glColor3fv(white);
+	glBegin(GL_LINES);
+	glVertex3d(0,0,0);
+	glVertex3d(len,0,0);
+	glVertex3d(0,0,0);
+	glVertex3d(0,len,0);
+	glVertex3d(0,0,0);
+	glVertex3d(0,0,len);
+	glEnd();
+	/*  Label axes */
+	glRasterPos3d(len,0,0);
+	
+	glRasterPos3d(0,len,0);
+	
+	glRasterPos3d(0,0,len);
    
      glEnable(GL_LIGHTING);
   
@@ -646,12 +645,17 @@ void drawAxes(void)
 
 void drawBox(){
   
-	glEnable (GL_BLEND);
-	glColor4f(1,1,1,0.3);
+
+	//glEnable (GL_BLEND);
+	//glColor4f(1,1,1,0.3);
+	glColor3f(1,1,1);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-	glDepthMask(GL_FALSE);
+	//glDepthMask(GL_FALSE);
+	//glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
 	
 	glBegin(GL_QUADS);
 	//front
@@ -701,16 +705,12 @@ void drawBox(){
 	glVertex3f(BOX_SIZE / 2, -BOX_SIZE / 2, BOX_SIZE / 2);
 	glVertex3f(-BOX_SIZE / 2, -BOX_SIZE / 2, BOX_SIZE / 2);
 	
-	
-	
-	
-	
-	  
-	
+
 	glEnd();
 	
 	glDisable (GL_BLEND);
 	glDepthMask(GL_TRUE);
+	
 
 }
 
@@ -747,6 +747,7 @@ void drawScene() {
 
 	
 	glTranslatef(0.0f, 0.0f, -20.0f);
+	
 	glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
 	
 	glShadeModel(GL_FLAT);
@@ -756,10 +757,11 @@ void drawScene() {
 	drawTopBottom();
 	drawBox();
 	drawAxes();
-	
+ 
+	TurnOnLight();
 	glShadeModel(GL_SMOOTH);
 	/*
-	//Draw the balls
+	//Draw the ballsy
 	for(unsigned int i = 0; i < _balls.size(); i++) {
 		Ball* ball = _balls[i];
 		glPushMatrix();
@@ -792,7 +794,7 @@ int main(int argc, char** argv) {
 	glutInitWindowSize(400, 400);
 	
 	glutCreateWindow("Collision Detection - videotutorialsrock.com");
-	TurnOnLight();
+	//TurnOnLight();
 	initRendering();
 	
 	/*
