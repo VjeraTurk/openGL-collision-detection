@@ -1,0 +1,3 @@
+[Project]
+Manager=KDevCustomMakeManager
+Name=rigid_body_collision
