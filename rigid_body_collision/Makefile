@@ -10,7 +10,7 @@ else
 	LIBS = -lglut	-lGL	-lGLU	-lAntTweakBar
 endif
 
-INC = -I/home/Documents/AntTweakBar/include 
+INC = -I/home/Documents/AntTweakBar/include
 
 all: $(PROG)
 

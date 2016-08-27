@@ -101,8 +101,21 @@ ostream &operator<<(ostream &output, const Vec3f &v) {
 	cout << '(' << v[0] << ", " << v[1] << ", " << v[2] << ')';
 	return output;
 }
+Vec3f crossProduct( const Vec3f &v1,  const Vec3f &v2 )
+{
+    Vec3f vCrossProduct;
 
+    vCrossProduct[0] = v1[1] * v2[2] - v1[2] * v2[1];
+    vCrossProduct[1] = v1[2] * v2[0] - v1[0] * v2[2];
+    vCrossProduct[2] = v1[0] * v2[1] - v1[1] * v2[0];
 
+    return vCrossProduct;
+}
+
+ float dotProduct( const Vec3f &v1,  const Vec3f &v2 )
+{
+    return( v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]  );
+}
 
 
 
