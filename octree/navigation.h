@@ -18,7 +18,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 
 int mode;
 double beginx, beginy;
-double dis = 20.0, azim = 0.0, elev = 0.0;
+double dis = 10.0, azim = 0.0, elev = 0.0;
 double ddis = 0.0, dazim = 0.0, delev = 0.0;
 
 void cb_mouse(int _b, int _s, int _x, int _y)

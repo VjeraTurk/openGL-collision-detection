@@ -190,7 +190,7 @@ void InsertObject(Node *pTree, Ball *pObject)
     for (int i=0; i< 3; i++){
    
     float delta = pObject->pos[i] - pTree->center.x;
-   //cout<<pTree->halfWidth<<endl;
+    cout<<pTree->halfWidth<<endl;
      
       if(abs(delta) < pTree->halfWidth + pObject->r){
 	//cout<<"i:"<<i<<endl;
@@ -215,10 +215,11 @@ void InsertObject(Node *pTree, Ball *pObject)
       
       if(pTree->pChild[index] == NULL){
 	//cout<<"case 2 ";
+	  //pTree = new Node;
 	  pTree = BuildOctree(pTree->center,pTree->halfWidth,1);
-	//pTree->pChild[index]->pChild[0]=NULL;
-	//InsertObject(pTree->pChild[index], pObject);
-	cout<<"center:"<<pTree->center.x<<" "<<pTree->center.y<<" "<<pTree->center.z;
+	 //pTree->pChild[index]->pChild[0]=NULL;
+	InsertObject(pTree->pChild[index], pObject);
+	  cout<<"center:"<<pTree->center.x<<" "<<pTree->center.y<<" "<<pTree->center.z;
 	 cout<<"center:"<<pTree->pChild[0]->center.x<<" "<<pTree->pChild[0]->center.y<<" "<<pTree->pChild[0]->center.z;
       
 	
@@ -297,8 +298,8 @@ void drawOctree(Node *pTree){
     glPushMatrix();
     glDisable(GL_LIGHTING);
     glColor3f(0,1,0);
-    glTranslatef(pTree->center.x,pTree->center.y,pTree->center.z);
-    glutWireCube(pTree->halfWidth*2);
+    glTranslatef(pTree->center.x-pTree->halfWidth,pTree->center.y-pTree->halfWidth,pTree->center.z-pTree->halfWidth);
+    glutWireCube(pTree->halfWidth);
     //glutWireCube(1);
     glEnable(GL_LIGHTING);
     glPopMatrix();
@@ -421,7 +422,9 @@ void display()
     glMatrixMode(GL_MODELVIEW);
 
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -(dis+ddis));
+   // glTranslatef(0.0, 0.0, -(dis+ddis));
+
+    glTranslatef(0.0, 0.0, -60.0f);
 
     glRotated(elev+delev, 1.0, 0.0, 0.0);
     glRotated(azim+dazim, 0.0, 1.0, 0.0);
@@ -476,7 +479,7 @@ void display()
     bw2.wall = &top;
     
     root.center=Point(0,0,0);//radi
-    root.halfWidth=3;
+    root.halfWidth=12;
     //root.center=Point(root.halfWidth,0,0);
     
    // BuildOctree(root.center,root.halfWidth,1);   
