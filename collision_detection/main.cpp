@@ -8,16 +8,38 @@
 #include <GL/glut.h>
 
 
+#include <AntTweakBar.h>
+#include <glm/fwd.hpp>
+
+#include <glm/glm.hpp> 
+
+#include <glm/vec3.hpp> // glm::vec3
+#include <glm/gtc/random.hpp>
+#include <glm/vec4.hpp> // glm::vec4
+#include <glm/mat4x4.hpp> // glm::mat4
+
+#define GLM_FORCE_RADIANS 1
+#define RED 50
+#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
+
 #include "vec3f.h"
 #include "cube.h"
+
 using namespace std;
 
 //Returns a random float from 0 to < 1
-float randomFloat() {
+/*float randomFloat() {
 	return (float)rand() / ((float)RAND_MAX + 1);
+}*/
+//my random using glm:
+float randomFloat() {
+	return glm::linearRand(0.0f,1.0f);
 }
 
-const float GRAVITY =  9.80665f;
+
+
+//const float GRAVITY =  9.80665f;
+const float GRAVITY =  8.0f;
 const float BOX_SIZE = 12.0f; //The length of one side of the box
 //The amount of time between each time that we handle collisions and apply the
 //effects of gravity
@@ -30,7 +52,16 @@ struct Ball {
 	Vec3f pos; //Position
 	float r; //Radius
 	Vec3f color;
+	float t_red;
 };
+
+struct wall{
+  
+      Vec3f direction;
+};
+
+wall l,r,f,n, b,t;
+
 
 enum Wall {WALL_LEFT, WALL_RIGHT, WALL_FAR, WALL_NEAR, WALL_TOP, WALL_BOTTOM};
 
@@ -70,7 +101,7 @@ class Octree {
 		int depth;
 	
       private:	//The balls in this, if this doesn't have any children
-		set<Ball*> balls;
+		set<Ball*> balls; //bolje linked list?
 		
 		//The number of balls in this, including those stored in its children
 		int numBalls;
@@ -237,8 +268,7 @@ class Octree {
 		 * direction of the coordinate, e.g. if w is WALL_TOP, the function
 		 * assumes that this is in the far upward direction.
 		 */
-		void potentialBallWallCollisions(vector<BallWallPair> &cs,
-										 Wall w, char coord, int dir) {
+		void potentialBallWallCollisions(vector<BallWallPair> &cs,Wall w, char coord, int dir) {
 			if (hasChildren) {
 				//Recursively call potentialBallWallCollisions on the correct
 				//half of the children (e.g. if w is WALL_TOP, call it on
@@ -476,7 +506,17 @@ bool testBallBallCollision(Ball* b1, Ball* b2) {
 		//Check whether the balls are moving toward each other
 		Vec3f netVelocity = b1->v - b2->v;
 		Vec3f displacement = b1->pos - b2->pos;
+		
+		if(netVelocity.dot(displacement)<0){
+		b1->t_red=RED;
+		b2->t_red=RED;
+		
+		  
+		} 
+		
 		return netVelocity.dot(displacement) < 0;
+		
+	  
 	}
 	else
 		return false;
@@ -485,23 +525,29 @@ bool testBallBallCollision(Ball* b1, Ball* b2) {
 //Handles all ball-ball collisions
 void handleBallBallCollisions(vector<Ball*> &balls, Octree* octree) {
 	vector<BallPair> bps;
+	
 	potentialBallBallCollisions(bps, balls, octree);
+	vector<Ball*> redballs;
+	
 	for(unsigned int i = 0; i < bps.size(); i++) {
 		BallPair bp = bps[i];
 		
 		Ball* b1 = bp.ball1;
 		Ball* b2 = bp.ball2;
+	
 		if (testBallBallCollision(b1, b2)) {
 			//Make the balls reflect off of each other
 			Vec3f displacement = (b1->pos - b2->pos).normalize();
 			b1->v -= 2 * displacement * b1->v.dot(displacement);
 			b2->v -= 2 * displacement * b2->v.dot(displacement);
 		}
+		
 	}
 }
 
 //Returns the direction from the origin to the wall
 Vec3f wallDirection(Wall wall) {
+  //str. 93. Real Time CD
 	switch (wall) {
 		case WALL_LEFT:
 			return Vec3f(-1, 0, 0);
@@ -525,8 +571,10 @@ bool testBallWallCollision(Ball* ball, Wall wall) {
 	Vec3f dir = wallDirection(wall);
 	//Check whether the ball is far enough in the "dir" direction, and whether
 	//it is moving toward the wall
-	return ball->pos.dot(dir) + ball->r > BOX_SIZE / 2 &&
-			ball->v.dot(dir) > 0;
+	//return ball->pos.dot(dir) + ball->r > BOX_SIZE / 2 && ball->v.dot(dir) > 0;
+	return ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir) > 0;
+  
+	
 }
 
 //Handles all ball-wall collisions
@@ -538,9 +586,11 @@ void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 		
 		Ball* b = bwp.ball;
 		Wall w = bwp.wall;
+		
 		if (testBallWallCollision(b, w)) {
 			//Make the ball reflect off of the wall
 			Vec3f dir = (wallDirection(w)).normalize();
+
 			b->v -= 2 * dir * b->v.dot(dir);
 		}
 	}
@@ -549,9 +599,11 @@ void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 //Applies gravity and handles all collisions.  Should be called every
 //TIME_BETWEEN_UPDATES seconds.
 void performUpdate(vector<Ball*> &balls, Octree* octree) {
+	
 	applyGravity(balls);
 	handleBallBallCollisions(balls, octree);
 	handleBallWallCollisions(balls, octree);
+  
 }
 
 //Advances the state of the balls by t.  timeUntilUpdate is the amount of time
@@ -593,6 +645,8 @@ void cleanup() {
 	delete _octree;
 }
 int pause = 1;
+int walls = 1;
+int ot = 1;
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
@@ -617,8 +671,14 @@ void handleKeypress(unsigned char key, int x, int y) {
 			} break;
 		case 'n': _timeUntilUpdate=1;
 			  break;
-		case 'p': if(pause==1) pause=0;
-			  else if(pause==0) pause=1;
+		case 'p': if(pause == 1) pause = 0;
+			  else if(pause==0) pause = 1;
+			  break;
+		case 'w': if(walls == 1) walls = 0;
+			  else walls=1;
+			  break;
+		case 'o': if(ot == 1) ot=0;
+			  else ot = 1;
 			  break;
 	
 	}
@@ -651,14 +711,35 @@ void handleResize(int w, int h) {
 }
 void drawBalls(){
   //Draw the balls
+	
+      for(unsigned int i = 0; i < _balls.size(); i++) {
+		Ball* ball = _balls[i];
+		glPushMatrix();
+		glTranslatef(ball->pos[0], ball->pos[1], ball->pos[2]);
+		
+		if(ball->t_red){
+		
+		  glColor3f(1, (-ball->t_red/50)+1,(-ball->t_red/50)+1);  
+		  ball->t_red--;
+		  
+		}else{
+		  
+		glColor3f(1, 1, 1);
+		  
+		}	//glColor3f(ball->color[0], ball->color[1], ball->color[2]);
+		
+		glutSolidSphere(ball->r, 12, 12); //Draw a sphere
+		glPopMatrix();
+	}
+	/*
 	for(unsigned int i = 0; i < _balls.size(); i++) {
 		Ball* ball = _balls[i];
 		glPushMatrix();
 		glTranslatef(ball->pos[0], ball->pos[1], ball->pos[2]);
-		glColor3f(ball->color[0], ball->color[1], ball->color[2]);
+		glColor3f(1,0,0);
 		glutSolidSphere(ball->r, 12, 12); //Draw a sphere
 		glPopMatrix();
-	}
+	}*/
 	
 }	
 void Lightning(){
@@ -694,10 +775,14 @@ void drawScene() {
 	//Lightning(); //svjetlo rotira
 	
 	glShadeModel(GL_SMOOTH);
-	drawCube();
-	drawOctree(_octree, box_size);
-	drawBalls();
 	
+	if(walls==1){
+	  drawCube(BOX_SIZE);  
+	}
+	if(ot==1){
+	drawOctree(_octree, box_size);  
+	}
+	drawBalls();
 	//uncomment for Transparent Cube:
 	
 	/*
@@ -744,6 +829,13 @@ int main(int argc, char** argv) {
 	initRendering();
 	
 	_octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
+	
+	l.direction = Vec3f(-1, 0, 0);
+	r.direction=Vec3f(1, 0, 0);
+	f.direction=Vec3f(0, 0, -1);
+	n.direction=Vec3f(0, 0, 1);
+	t.direction=Vec3f(0, 1, 0);
+	b.direction=Vec3f(0, -1, 0);
 	
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
