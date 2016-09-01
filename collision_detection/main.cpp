@@ -111,8 +111,7 @@ void drawCube(float box_size){
 	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
 	
 	//Right face
-	glColor3f(1,r.t_red, r.t_red);	
-	glColor4f(1,r.t_red, r.t_red, ALPHA);	
+	glColor4f(1,-(r.t_red/50)+ 1, -(r.t_red/50)+ 1, ALPHA);	
 
 	glNormal3f(-1.0, 0.0f, 0.0f);
 	
@@ -122,8 +121,7 @@ void drawCube(float box_size){
 	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
 		
 	//near face
-	glColor3f(1,n.t_red, n.t_red);	
-	glColor4f(1,n.t_red, n.t_red, ALPHA);	
+      glColor4f(1,-(n.t_red/50)+ 1, -(n.t_red/50)+ 1, ALPHA);	
 
 	glNormal3f(0.0, 0.0f, -1.0f);
 	
@@ -662,9 +660,7 @@ bool testBallWallCollision(Ball* ball, Wall* wall) {
 	
 	if( ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir)>0 ){ 
 	  
-	  cout<<"tututu"<<endl;
 	  wall->t_red=50.0f;
-	 // cout<<wall->t_red;
 	}
 	
 	return ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir) > 0;
@@ -685,13 +681,12 @@ void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 		Ball* b = bwp.ball;
 		Wall* w = bwp.wall;
 		
-		cout<<w->t_red<<endl;
 		 
 		if (testBallWallCollision(b, w)) {
 			//Make the ball reflect off of the wall
 			Vec3f dir = w->direction.normalize();
 			b->v -= 2 * dir * b->v.dot(dir);
-			//cout<<w->t_red;
+
 		}
 	}
 }
