@@ -39,7 +39,7 @@ float randomFloat() {
 
 
 //const float GRAVITY =  9.80665f;
-const float GRAVITY =  8.0f;
+const float GRAVITY =  0.0f;
 const float BOX_SIZE = 12.0f; //The length of one side of the box
 //The amount of time between each time that we handle collisions and apply the
 //effects of gravity
@@ -55,15 +55,101 @@ struct Ball {
 	float t_red;
 };
 
-struct wall{
+struct Wall{
   
       Vec3f direction;
+      float t_red;
 };
 
-wall l,r,f,n, b,t;
+Wall l,r,f,n,b,t;
+const float ALPHA = 0.6f;
+void drawCube(float box_size){
+  
+  glBegin(GL_QUADS);
+  
+	if(b.t_red)b.t_red--;
+	if(t.t_red)t.t_red--;
+	if(n.t_red)n.t_red--;	
+	if(f.t_red)f.t_red--; //Where ever you areee
+	if(l.t_red)l.t_red--;
+	if(r.t_red)r.t_red--;		
+	//cout<<walls[i].t_red<<endl;
+	//glColor3f(0.3f, 0.3f, 1.0f);
+	//glColor4f(0.3f, 0.3f, 1.0f, ALPHA);
+	
+	//Top face
+	//glColor3f(1,t.t_red, t.t_red);	
+	glColor4f(1,-(t.t_red/50)+ 1, -(t.t_red/50)+ 1, ALPHA);	
+	glNormal3f(0.0, -1.0f, 0.0f);
+	
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
+	
+	//Bottom face
+
+	glColor4f(1,-(b.t_red/50)+ 1, -(b.t_red/50)+ 1, ALPHA);	
+	glNormal3f(0.0, 1.0f, 0.0f);
+	
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
+	
+	//Left face
+	
+
+	glColor4f(1,-(l.t_red/50)+ 1, -(l.t_red/50)+ 1, ALPHA);	
+	
+
+	glNormal3f(1.0, 0.0f, 0.0f);
+
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	
+	//Right face
+	glColor3f(1,r.t_red, r.t_red);	
+	glColor4f(1,r.t_red, r.t_red, ALPHA);	
+
+	glNormal3f(-1.0, 0.0f, 0.0f);
+	
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+		
+	//near face
+	glColor3f(1,n.t_red, n.t_red);	
+	glColor4f(1,n.t_red, n.t_red, ALPHA);	
+
+	glNormal3f(0.0, 0.0f, -1.0f);
+	
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	
+	//Far face
+	glColor3f(1,f.t_red, f.t_red);	
+	glColor4f(1,f.t_red, f.t_red, ALPHA);	
+
+	glNormal3f(0.0, 0.0f, 1.0f);
+	
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	
+	glEnd();
+	
+  
+}
 
 
-enum Wall {WALL_LEFT, WALL_RIGHT, WALL_FAR, WALL_NEAR, WALL_TOP, WALL_BOTTOM};
+//enum Wall {WALL_LEFT, WALL_RIGHT, WALL_FAR, WALL_NEAR, WALL_TOP, WALL_BOTTOM};
 
 //Stores a pair of balls
 struct BallPair {
@@ -74,8 +160,10 @@ struct BallPair {
 //Stores a ball and a wall
 struct BallWallPair {
 	Ball* ball;
-	Wall wall;
+	Wall* wall;
 };
+
+
 
 const int MAX_OCTREE_DEPTH = 6;
 const int MIN_BALLS_PER_OCTREE = 3;
@@ -268,7 +356,7 @@ class Octree {
 		 * direction of the coordinate, e.g. if w is WALL_TOP, the function
 		 * assumes that this is in the far upward direction.
 		 */
-		void potentialBallWallCollisions(vector<BallWallPair> &cs,Wall w, char coord, int dir) {
+		void potentialBallWallCollisions(vector<BallWallPair> &cs,Wall *w, char coord, int dir) {
 			if (hasChildren) {
 				//Recursively call potentialBallWallCollisions on the correct
 				//half of the children (e.g. if w is WALL_TOP, call it on
@@ -384,12 +472,12 @@ class Octree {
 		
 		//Adds potential ball-wall collisions to the specified set
 		void potentialBallWallCollisions(vector<BallWallPair> &collisions) {
-			potentialBallWallCollisions(collisions, WALL_LEFT, 'x', 0);
-			potentialBallWallCollisions(collisions, WALL_RIGHT, 'x', 1);
-			potentialBallWallCollisions(collisions, WALL_BOTTOM, 'y', 0);
-			potentialBallWallCollisions(collisions, WALL_TOP, 'y', 1);
-			potentialBallWallCollisions(collisions, WALL_FAR, 'z', 0);
-			potentialBallWallCollisions(collisions, WALL_NEAR, 'z', 1);
+			potentialBallWallCollisions(collisions, &l, 'x', 0);
+			potentialBallWallCollisions(collisions, &r, 'x', 1);
+			potentialBallWallCollisions(collisions, &b, 'y', 0);
+			potentialBallWallCollisions(collisions, &t, 'y', 1);
+			potentialBallWallCollisions(collisions, &f, 'z', 0);
+			potentialBallWallCollisions(collisions, &n, 'z', 1);
 		}
 };
   
@@ -510,7 +598,6 @@ bool testBallBallCollision(Ball* b1, Ball* b2) {
 		if(netVelocity.dot(displacement)<0){
 		b1->t_red=RED;
 		b2->t_red=RED;
-		
 		  
 		} 
 		
@@ -544,7 +631,7 @@ void handleBallBallCollisions(vector<Ball*> &balls, Octree* octree) {
 		
 	}
 }
-
+/*
 //Returns the direction from the origin to the wall
 Vec3f wallDirection(Wall wall) {
   //str. 93. Real Time CD
@@ -565,13 +652,21 @@ Vec3f wallDirection(Wall wall) {
 			return Vec3f(0, 0, 0);
 	}
 }
-
+*/
 //Returns whether a ball and a wall are colliding
-bool testBallWallCollision(Ball* ball, Wall wall) {
-	Vec3f dir = wallDirection(wall);
+bool testBallWallCollision(Ball* ball, Wall* wall) {
+	Vec3f dir = wall->direction;
 	//Check whether the ball is far enough in the "dir" direction, and whether
 	//it is moving toward the wall
 	//return ball->pos.dot(dir) + ball->r > BOX_SIZE / 2 && ball->v.dot(dir) > 0;
+	
+	if( ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir)>0 ){ 
+	  
+	  cout<<"tututu"<<endl;
+	  wall->t_red=50.0f;
+	 // cout<<wall->t_red;
+	}
+	
 	return ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir) > 0;
   
 	
@@ -579,19 +674,24 @@ bool testBallWallCollision(Ball* ball, Wall wall) {
 
 //Handles all ball-wall collisions
 void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
+	
 	vector<BallWallPair> bwps;
-	potentialBallWallCollisions(bwps, balls, octree);
+	
+	potentialBallWallCollisions(bwps, balls, octree);//fill bwps
+	
 	for(unsigned int i = 0; i < bwps.size(); i++) {
+		
 		BallWallPair bwp = bwps[i];
-		
 		Ball* b = bwp.ball;
-		Wall w = bwp.wall;
+		Wall* w = bwp.wall;
 		
+		cout<<w->t_red<<endl;
+		 
 		if (testBallWallCollision(b, w)) {
 			//Make the ball reflect off of the wall
-			Vec3f dir = (wallDirection(w)).normalize();
-
+			Vec3f dir = w->direction.normalize();
 			b->v -= 2 * dir * b->v.dot(dir);
+			//cout<<w->t_red;
 		}
 	}
 }
@@ -603,7 +703,6 @@ void performUpdate(vector<Ball*> &balls, Octree* octree) {
 	applyGravity(balls);
 	handleBallBallCollisions(balls, octree);
 	handleBallWallCollisions(balls, octree);
-  
 }
 
 //Advances the state of the balls by t.  timeUntilUpdate is the amount of time
@@ -645,7 +744,7 @@ void cleanup() {
 	delete _octree;
 }
 int pause = 1;
-int walls = 1;
+int show_walls = 1;
 int ot = 1;
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
@@ -674,8 +773,8 @@ void handleKeypress(unsigned char key, int x, int y) {
 		case 'p': if(pause == 1) pause = 0;
 			  else if(pause==0) pause = 1;
 			  break;
-		case 'w': if(walls == 1) walls = 0;
-			  else walls=1;
+		case 'w': if(show_walls == 1) show_walls = 0;
+			  else show_walls=1;
 			  break;
 		case 'o': if(ot == 1) ot=0;
 			  else ot = 1;
@@ -748,11 +847,6 @@ void Lightning(){
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 	
 	GLfloat lightColor[] = {0.7f, 0.7f, 0.7f, 1.0f};
-	//GLfloat lightPos[] = {1.0f, 0.2f, 0.0f, 0.0f}; 	// right side
-	//GLfloat lightPos[] = {0.0f, 12, 0.0f, 0.0f}; 	// top side
-	//GLfloat lightPos[] = {-2 * BOX_SIZE, BOX_SIZE, 4 * BOX_SIZE, 1.0f};	
-	//GLfloat lightPos[] = {-2 * BOX_SIZE, BOX_SIZE, 4 * BOX_SIZE, 1.0f}; //left side
-	
 	GLfloat lightPos[] = {BOX_SIZE, BOX_SIZE, -4 * BOX_SIZE, BOX_SIZE}; //in front
 	
 	
@@ -776,7 +870,7 @@ void drawScene() {
 	
 	glShadeModel(GL_SMOOTH);
 	
-	if(walls==1){
+	if(show_walls==1){
 	  drawCube(BOX_SIZE);  
 	}
 	if(ot==1){
@@ -828,7 +922,6 @@ int main(int argc, char** argv) {
 	glutCreateWindow("Collision Detection");
 	initRendering();
 	
-	_octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
 	
 	l.direction = Vec3f(-1, 0, 0);
 	r.direction=Vec3f(1, 0, 0);
@@ -836,6 +929,9 @@ int main(int argc, char** argv) {
 	n.direction=Vec3f(0, 0, 1);
 	t.direction=Vec3f(0, 1, 0);
 	b.direction=Vec3f(0, -1, 0);
+	
+	_octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
+	
 	
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
@@ -845,11 +941,6 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 	return 0;
 }
-
-
-
-
-
 
 
 
