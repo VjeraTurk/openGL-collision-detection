@@ -12,7 +12,6 @@ void handleKeypress(unsigned char key, int x, int y) {
 		case 27: //Escape key
 			//TwTerminate();
 			exit(0);
-	
 	}
 }
 

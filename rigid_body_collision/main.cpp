@@ -16,6 +16,7 @@
 
 #define BOX_SIZE 6
 #define MAX_OCTREE_DEPTH 6
+const float GRAVITY =  8.0f;
 using namespace std;
 
 int flag=1; //colide = 0 don't colide =-1;
@@ -92,6 +93,9 @@ rb->omega = rb->Iinv * rb->L;
 
 }
 */
+float randomFloat() {
+	return (float)rand() / ((float)RAND_MAX + 1);
+}
 
 struct Ball{
   Vec3f pos; // position
@@ -153,6 +157,11 @@ void createBoundingSphere( triangle *tri )
     tri->vCenter.x = (fMinX + fMaxX) / 2;
     tri->vCenter.y = (fMinY + fMaxY) / 2;
     tri->vCenter.z = (fMinZ + fMaxZ) / 2;
+    
+    //my add
+    tri->ball->pos[0] = (fMinX + fMaxX) / 2;
+    tri->ball->pos[1] = (fMinY + fMaxY) / 2;
+    tri->ball->pos[2] = (fMinZ + fMaxZ) / 2;
 
     fRadius1 = sqrt( ((tri->vCenter.x - tri->v0.x) * (tri->vCenter.x - tri->v0.x)) +
                      ((tri->vCenter.y - tri->v0.y) * (tri->vCenter.y - tri->v0.y)) +
@@ -171,11 +180,15 @@ void createBoundingSphere( triangle *tri )
 
     if( fRadius1 < fRadius2 )
 		fRadius1 = fRadius2;
-
+   
     tri->fRadius = fRadius1;
+
+    tri->ball->r = fRadius1;//my add
     glColor3f( 0.0f, 0.0f, 1.0f );
     
-    cout << tri->fRadius;
+    g_tri1.ball->v=Vec3f(-2,0,0);  
+    g_tri1.ball->color= Vec3f(1,0.5,1);
+    
     return;
 
   
@@ -404,6 +417,20 @@ struct BallWallPair {
  BallWallPair bw, bw2;
 // hash table 0000 0001 0010 0011 ... lista? Kako
 
+
+
+
+ /*
+ struct Node {
+Point center;
+// Center point of octree node (not strictly needed)
+float halfWidth;
+// Half the width of the node volume (not strictly needed)
+Node *pChild[8];
+// Pointers to the eight children nodes
+Object *pObjList; // Linked list of objects contained at this node
+};
+  */
 class Octree {
   /*
 -Each node has a bounding region which defines the enclosing region
@@ -434,7 +461,7 @@ being used (the optimization benefits at the cost of additional complexity is so
 	  for(int x=0;x<2;x++){
 	     
 	    if(ball->pos[0] - ball->r < center[0]){
-	      
+	      continue;
 	    }
 	    
 	    
@@ -447,6 +474,32 @@ being used (the optimization benefits at the cost of additional complexity is so
 };
 
     
+void drawTriangle(triangle tri){
+  
+  glColor3f( 1.0f, 0.0f, 0.0f );
+  glPushMatrix();
+     //glTranslatef(tri.ball->pos[0],tri.ball->pos[1], tri.ball->pos[2]);
+   
+  glPushMatrix();
+     glTranslatef(tri.ball->pos[0],tri.ball->pos[1], tri.ball->pos[2]);
+    // glTranslatef( g_tri1.vCenter.x, g_tri1.vCenter.y, g_tri1.vCenter.z );
+    glBegin(GL_POLYGON);
+      {
+	      glVertex3f(tri.v0.x, tri.v0.y, tri.v0.z );
+	      glVertex3f( tri.v1.x, tri.v1.y, tri.v1.z );
+	      glVertex3f( tri.v2.x, tri.v2.y, tri.v2.z );
+      } glEnd();
+    glPopMatrix();
+   
+    glTranslatef( g_tri1.vCenter.x, g_tri1.vCenter.y, g_tri1.vCenter.z );
+    glPushMatrix();
+      glTranslatef(tri.ball->pos[0],tri.ball->pos[1], tri.ball->pos[2]);
+      glutWireSphere(g_tri1.ball->r,16,16);  
+    glPopMatrix();
+    
+      
+ glPopMatrix();  	  
+}
 void drawBall(Ball ball)
 {
     glColor3f(ball.color[0],ball.color[1], ball.color[2]);
@@ -455,10 +508,9 @@ void drawBall(Ball ball)
     
     glTranslatef(ball.pos[0],ball.pos[1],ball.pos[2]);
     glutSolidSphere(ball.r,20,20);
- 
-    
-    
+  
     glPopMatrix();
+    
 }
 const float TIME_BETWEEN_UPDATES = 0.001f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
@@ -466,13 +518,20 @@ const float t =0.005;
 
 void move_ball(Ball *ball, float dt){
   
-    glPushMatrix();
+   // glPushMatrix();
     ball->pos+=ball->v * dt;
     //cout << ball->pos[0]<<endl;
-    glPopMatrix();
+    //glPopMatrix();
   
 }
-
+void move_triangle(triangle *tr,float dt){
+ /*
+  tr->v0 += tr->ball->v * dt;
+  tr->v1 += tr->ball->v * dt;
+  tr->v2 += tr->ball->v * dt;
+  */
+  
+}
 
 void check_collision(BallPair pair){
    
@@ -502,7 +561,7 @@ void responce(BallPair pair){
 
 void check_wall_collision(BallWallPair pair){
   
-  
+  /*
   Ball *b = pair.ball;
   Wall *w = pair.wall;
   
@@ -511,7 +570,7 @@ void check_wall_collision(BallWallPair pair){
   if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
    w_flag=0;
   }
-  
+  */
 }
 
 void w_responce(BallWallPair pair){
@@ -529,7 +588,8 @@ void update(int value) {
      if(flag && w_flag)
         {
            move_ball(&ball1,t);
-	   move_ball(&ball2,t);
+	   move_triangle(&g_tri2,t);
+	   move_ball(g_tri1.ball,t);
 	   check_collision(bp);
 	   check_wall_collision(bw);
            check_wall_collision(bw2);
@@ -551,27 +611,24 @@ void update(int value) {
 
 	glutTimerFunc(TIMER_MS, update, 0);
 }
-void drawTriangle(triangle tri){
+Ball* AllBalls;
+ /*
+  int print_list(node *head) {
+    node *trenutni;
+ 
+    if(!head) return -1;
+    for(trenutni=head; trenutni!=NULL; trenutni=trenutni->next)
+        printf("%c ", trenutni->val);
+    printf("\n");
+    return 0;
+}
+  */  
+void drawBalls(Ball *head){
+  Ball *temp;
+  for(temp=head; temp!=NULL; temp= temp->next){
+    drawBall(*temp);
+  }
 
-  Ball *ball = tri.ball;
-  
-  glColor3f( 1.0f, 0.0f, 0.0f );
-  glTranslatef(tri.ball->pos[0],tri.ball->pos[1], tri.ball->pos[2]);
-  
-    	glBegin(GL_POLYGON);
-	      {
-		      glVertex3f(tri.v0.x, tri.v0.y, tri.v0.z );
-		      glVertex3f( tri.v1.x, tri.v1.y, tri.v1.z );
-		      glVertex3f( tri.v2.x, tri.v2.y, tri.v2.z );
-	      }
-	  glEnd();
-
-	  
-  glPushMatrix();
-  glTranslatef(tri.vCenter.x,tri.vCenter.y, tri.vCenter.z);  
-  
-  glutWireSphere(g_tri1.fRadius,16,16);
-  glPopMatrix();
 }
 void display()
 {
@@ -590,11 +647,40 @@ void display()
     glColor3f(1,1,1);
    // drawCube(BOX_SIZE);
     
-    drawBall(ball1);	
+    drawBall(ball1); 
+   drawBall(*g_tri1.ball);
     drawTriangle(g_tri1);
+
+    drawBalls(AllBalls);
+    
     
     glutSwapBuffers();
 }
+//vector<Ball*> _balls; //All of the balls in play
+
+Ball *create_list(int max){   
+    Ball* head;
+    Ball* temp=NULL;
+    Ball* ball;
+    
+  for(int i = 0; i < max; i++) {
+    
+      ball = new Ball();
+   
+      ball->pos = Vec3f(8 * randomFloat() - 4, 8 * randomFloat() - 4, 8 * randomFloat() - 4);
+      ball->v = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 8 * randomFloat() - 4);
+      ball->r = 0.1f * randomFloat() + 0.1f;
+      ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
+      ball->next=NULL;
+      
+      if(temp!=head)head=ball;
+      else  temp->next = ball;
+      temp = ball;
+     
+  }
+  return head;
+}
+
  void init(){
      
    //ball 1
@@ -605,41 +691,41 @@ void display()
     
   //triangle 1
     g_tri1.v0.x =  0.1f;
-    g_tri1.v0.y = -0.2f;
+    g_tri1.v0.y =  0.2f;
     g_tri1.v0.z =  0.5f;
-    g_tri1.v1.x = -0.5f;
+    
+    g_tri1.v1.x =  0.5f;
     g_tri1.v1.y =  0.5f;
     g_tri1.v1.z =  0.5f;
-    g_tri1.v2.x = -1.2f;
-    g_tri1.v2.y = -0.5f;
+    
+    g_tri1.v2.x =  1.2f;
+    g_tri1.v2.y =  0.5f;
     g_tri1.v2.z =  0.5f;
     
-    g_tri1.vNormal = vector3f( 0.0f, 0.0f, 0.0f );
+   // g_tri1.vNormal = vector3f( 0.0f, 0.0f, 0.0f );
   
-    //ball 2 for triangle 1
-    createBoundingSphere( &g_tri1 ); 
+    g_tri1.vNormal = vector3f( 1.0f, 1.0f, 1.0f );
+    
+    //triangle ball
     g_tri1.ball=&ball2;
-    ball2.pos=Vec3f(g_tri1.vCenter.x,g_tri1.vCenter.y,g_tri1.vCenter.z);
-    ball2.v=Vec3f(-2,0,0);  
-    ball2.r=g_tri1.fRadius;
-    ball2.color= Vec3f(1,0.5,1);
-        
+    createBoundingSphere( &g_tri1 ); 
+    
     bp.bA = &ball1;
     bp.bB = &ball2;
    
     bottom.direction = Vec3f(0, -1, 0);
     top.direction = Vec3f(0, 1, 0);
    
+ 
     bw.ball = &ball2;
     bw.wall = &bottom;
     
 
     bw2.ball = &ball1;
     bw2.wall = &top;
-    
-    
 
 
+    AllBalls=create_list(10);
 
 }
   

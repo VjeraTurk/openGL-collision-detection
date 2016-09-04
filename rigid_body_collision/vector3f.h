@@ -8,9 +8,8 @@
 
 #ifndef _VECTOR3F_H_
 #define _VECTOR3F_H_
-
+#include "vec3f.h"
 #include <cmath>
-
 class vector3f
 {
 public:
@@ -51,6 +50,8 @@ public:
 
     vector3f operator + (void) const;
     vector3f operator - (void) const;
+    
+    
 };
 
 vector3f::vector3f( float x_, float y_, float z_ )
@@ -205,6 +206,16 @@ vector3f& vector3f::operator += ( const vector3f &other )
 
     return *this;
 }
+/*
+vector3f& vector3f::operator += ( const Vec3f other )
+{
+    x += other[0];
+    y += other[1];
+    z += other[2];
+
+    return *this;
+}*/
+
 
 vector3f& vector3f::operator -= ( const vector3f &other )
 {
