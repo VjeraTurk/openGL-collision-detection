@@ -21,78 +21,6 @@ using namespace std;
 
 int flag=1; //colide = 0 don't colide =-1;
 int w_flag=1; //colide = 0 don't colide =-1;
-/*
-struct matrix{
-  
-  float matrix[3][3];
-  
-};
-struct triple{
-  float x,y,z;
-};
-
-struct RigidBody {
-// Constant quantities 
-  double mass; //mass M 
-  matrix Ibody, Ibodyinv; // Ibody, I−1 body (inverse of Ibody)
-// State variables 
-  triple x; // x(t) 
-  matrix R; // R(t) 
-  triple P, L; //P(t)  L(t)
-
-// Derived quantities (auxiliary variables)
-  matrix Iinv; // I−1(t) 
-  triple v, omega; //  v(t) , ω(t) 
-
-// Computed quantities
-  triple force, torque; //F(t), τ(t)
-};
-#define NBODIES 2
-RigidBody Bodies[NBODIES];
-
-void State_to_Array(RigidBody *rb, double *y)
-{
-    *y++ = rb->x[0]; // x component of position 
-    *y++ = rb->x[1]; // etc. 
-    *y++ = rb->x[2];
-for(int i = 0; i < 3; i++)//  copy rotation matrix 
-  for(int j = 0; j < 3; j++)
-      *y++ = rb->R[i,j];
-
-*y++ = rb->P[0];
-*y++ = rb->P[1];
-*y++ = rb->P[2];
-*y++ = rb->L[0];
-*y++ = rb->L[1];
-*y++ = rb->L[2];
-}
-
-
-// Copy information from an array into the state variables
-void Array_to_State(RigidBody *rb, double *y)
-{
-rb->x[0] = *y++;
-rb->x[1] = *y++;
-rb->x[2] = *y++;
-for(int i = 0; i < 3; i++)
-for(int j = 0; j < 3; j++)
-rb->R[i,j] = *y++;
-rb->P[0] = *y++;
-rb->P[1] = *y++;
-rb->P[2] = *y++;
-rb->L[0] = *y++;
-rb->L[1] = *y++;
-rb->L[2] = *y++;
-// Compute auxiliary variables... 
-// v(t) = P(t)M 
-rb->v = rb->P / mass;
-// I−1(t) = R(t)I−1bodyR(t)T
-rb->Iinv = R * Ibodyinv * Transpose(R);
-// ω(t) = I−1(t)L(t) 
-rb->omega = rb->Iinv * rb->L;
-
-}
-*/
 float randomFloat() {
 	return (float)rand() / ((float)RAND_MAX + 1);
 }
@@ -106,7 +34,6 @@ struct Ball{
   
   Ball* next;
 };
-
 struct triangle
 {
     vector3f v0;
@@ -518,12 +445,15 @@ const float t =0.005;
 
 void move_ball(Ball *ball, float dt){
   
-   // glPushMatrix();
     ball->pos+=ball->v * dt;
     //cout << ball->pos[0]<<endl;
-    //glPopMatrix();
   
 }
+
+void pullBall(Ball *ball){
+  ball->v-= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
+}
+
 void move_triangle(triangle *tr,float dt){
  /*
   tr->v0 += tr->ball->v * dt;
@@ -539,7 +469,6 @@ void check_collision(BallPair pair){
    Ball *bB= pair.bB;
    
    float r = bA->r + bB->r;
-   cout<<r<<endl;
  
    if ((bA->pos - bB->pos).magnitudeSquared() < r*r){ 
     flag=0;
@@ -582,9 +511,51 @@ void w_responce(BallWallPair pair){
   
   w_flag = 1;
 }
+Ball* AllBalls;
+
+
+void applyGravity(Ball *head) {
+  Ball *temp;
+  for(temp=head; temp!=NULL; temp= temp->next){
+    pullBall(temp);
+  }
+
+}
+void moveBalls(Ball *head){
+    Ball *temp=NULL;
+ temp=head;
+ for(temp=head; temp!=NULL; temp= temp->next){ 
+   move_ball(temp,t);
+ }
+}
+
+/*
+  
+int print_list(node *head) {
+    node *trenutni;
+ 
+    if(!head) return -1;
+    for(trenutni=head; trenutni!=NULL; trenutni=trenutni->next)
+        printf("%c ", trenutni->val);
+    printf("\n");
+    return 0;
+}
+ */
+void drawBalls(Ball *head){
+  
+  Ball *temp;
+  
+ for(temp=head; temp!=NULL; temp = temp->next){
+    drawBall(*temp);
+  }
+
+}
+
 
 void update(int value) {
     //cout<<flag<<endl;
+  
+  
      if(flag && w_flag)
         {
            move_ball(&ball1,t);
@@ -605,31 +576,17 @@ void update(int value) {
 	  w_responce(bw);  
 	  w_responce(bw2);      
     }
+    pullBall(&ball1);
+    pullBall(&ball2);
+   
+    moveBalls(AllBalls);
+    applyGravity(AllBalls);
     
-    
-	glutPostRedisplay();
+    glutPostRedisplay();
+    glutTimerFunc(TIMER_MS, update, 0);
+}
 
-	glutTimerFunc(TIMER_MS, update, 0);
-}
-Ball* AllBalls;
- /*
-  int print_list(node *head) {
-    node *trenutni;
- 
-    if(!head) return -1;
-    for(trenutni=head; trenutni!=NULL; trenutni=trenutni->next)
-        printf("%c ", trenutni->val);
-    printf("\n");
-    return 0;
-}
-  */  
-void drawBalls(Ball *head){
-  Ball *temp;
-  for(temp=head; temp!=NULL; temp= temp->next){
-    drawBall(*temp);
-  }
 
-}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -646,17 +603,14 @@ void display()
     glShadeModel(GL_SMOOTH);
     glColor3f(1,1,1);
    // drawCube(BOX_SIZE);
-    
+   
     drawBall(ball1); 
-   drawBall(*g_tri1.ball);
+    drawBall(*g_tri1.ball);
     drawTriangle(g_tri1);
-
+   
     drawBalls(AllBalls);
-    
-    
     glutSwapBuffers();
 }
-//vector<Ball*> _balls; //All of the balls in play
 
 Ball *create_list(int max){   
     Ball* head;
@@ -664,19 +618,21 @@ Ball *create_list(int max){
     Ball* ball;
     
   for(int i = 0; i < max; i++) {
-    
-      ball = new Ball();
+        ball = new Ball();
    
-      ball->pos = Vec3f(8 * randomFloat() - 4, 8 * randomFloat() - 4, 8 * randomFloat() - 4);
+      ball->pos = Vec3f(8 * randomFloat() - 4, 8 * randomFloat() - 4, 8 * randomFloat() -4);
+      //ball->pos = Vec3f(0,0, 8 * randomFloat() -4);
       ball->v = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 8 * randomFloat() - 4);
       ball->r = 0.1f * randomFloat() + 0.1f;
       ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
+  
       ball->next=NULL;
       
-      if(temp!=head)head=ball;
+      if(!temp)head=ball;
+      
       else  temp->next = ball;
       temp = ball;
-     
+     cout<<ball->pos[3]<<endl;
   }
   return head;
 }
@@ -725,7 +681,7 @@ Ball *create_list(int max){
     bw2.wall = &top;
 
 
-    AllBalls=create_list(10);
+    AllBalls=create_list(40);
 
 }
   
