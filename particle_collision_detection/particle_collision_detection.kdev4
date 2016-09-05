@@ -1,0 +1,3 @@
+[Project]
+Manager=KDevCustomMakeManager
+Name=particle_collision_detection

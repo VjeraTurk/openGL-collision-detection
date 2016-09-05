@@ -6,8 +6,6 @@
 #include <vector>
 
 #include <GL/glut.h>
-
-
 #include <AntTweakBar.h>
 #include <glm/fwd.hpp>
 
@@ -18,12 +16,11 @@
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
 
-#define GLM_FORCE_RADIANS 1
-#define RED 50
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
+//#define GLM_FORCE_RADIANS 1
+#define RED 40
+//#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 
 #include "vec3f.h"
-#include "cube.h"
 
 using namespace std;
 
@@ -36,10 +33,33 @@ float randomFloat() {
 	return glm::linearRand(0.0f,1.0f);
 }
 
+void drawAxes(void)
+{
+ 
+    /*  Length of axes */
+    double len = 2.0;
+    glDisable(GL_LIGHTING);
+    //glColor3fv(white);
+    glBegin(GL_LINES);
+    glVertex3d(0,0,0);
+    glVertex3d(len,0,0);
+    glVertex3d(0,0,0);
+    glVertex3d(0,len,0);
+    glVertex3d(0,0,0);
+    glVertex3d(0,0,len);
+    glEnd();
+    /*  Label axes */
+    glRasterPos3d(len,0,0);
+    glRasterPos3d(0,len,0);
+    glRasterPos3d(0,0,len);
+   
+     glEnable(GL_LIGHTING);
+  
+}
 
 
 //const float GRAVITY =  9.80665f;
-const float GRAVITY =  0.0f;
+const float GRAVITY =  8.0f;
 const float BOX_SIZE = 12.0f; //The length of one side of the box
 //The amount of time between each time that we handle collisions and apply the
 //effects of gravity
@@ -48,6 +68,9 @@ const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
 
 //Stores information regarding a ball
 struct Ball {
+	//masa u kilogramima
+	float m=0.5;
+  
 	Vec3f v; //Velocity
 	Vec3f pos; //Position
 	float r; //Radius
@@ -73,12 +96,9 @@ void drawCube(float box_size){
 	if(f.t_red)f.t_red--; //Where ever you areee
 	if(l.t_red)l.t_red--;
 	if(r.t_red)r.t_red--;		
-	//cout<<walls[i].t_red<<endl;
-	//glColor3f(0.3f, 0.3f, 1.0f);
-	//glColor4f(0.3f, 0.3f, 1.0f, ALPHA);
-	
+
 	//Top face
-	//glColor3f(1,t.t_red, t.t_red);	
+
 	glColor4f(1,-(t.t_red/50)+ 1, -(t.t_red/50)+ 1, ALPHA);	
 	glNormal3f(0.0, -1.0f, 0.0f);
 	
@@ -121,7 +141,7 @@ void drawCube(float box_size){
 	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
 		
 	//near face
-      glColor4f(1,-(n.t_red/50)+ 1, -(n.t_red/50)+ 1, ALPHA);	
+        glColor4f(1,-(n.t_red/50)+ 1, -(n.t_red/50)+ 1, ALPHA);	
 
 	glNormal3f(0.0, 0.0f, -1.0f);
 	
@@ -131,8 +151,7 @@ void drawCube(float box_size){
 	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
 	
 	//Far face
-	glColor3f(1,f.t_red, f.t_red);	
-	glColor4f(1,f.t_red, f.t_red, ALPHA);	
+	glColor4f(1,-(f.t_red/50)+ 1, -(f.t_red/50)+ 1, ALPHA);	
 
 	glNormal3f(0.0, 0.0f, 1.0f);
 	
@@ -186,13 +205,15 @@ class Octree {
 		//The depth of this in the tree
 		int depth;
 	
-      private:	//The balls in this, if this doesn't have any children
-		set<Ball*> balls; //bolje linked list?
-		
 		//The number of balls in this, including those stored in its children
 		int numBalls;
 		
+      private:	//The balls in this, if this doesn't have any children
+		set<Ball*> balls; //bolje linked list?
+		
 		//Adds a ball to or removes one from the children of this
+		
+		//A5
 		void fileBall(Ball* ball, Vec3f pos, bool addBall) {
 			//Figure out in which child(ren) the ball belongs
 			for(int x = 0; x < 2; x++) {
@@ -238,6 +259,7 @@ class Octree {
 		}
 		
 		//Creates children of this, and moves the balls in this to the children
+		//A6
 		void haveChildren() {
 			for(int x = 0; x < 2; x++) {
 				float minX;
@@ -275,9 +297,7 @@ class Octree {
 							maxZ = corner2[2];
 						}
 						
-						children[x][y][z] = new Octree(Vec3f(minX, minY, minZ),
-													   Vec3f(maxX, maxY, maxZ),
-													   depth + 1);
+						children[x][y][z] = new Octree(Vec3f(minX, minY, minZ),Vec3f(maxX, maxY, maxZ),depth + 1);
 					}
 				}
 			}
@@ -393,6 +413,8 @@ class Octree {
 	public:
 		//Constructs a new Octree.  c1 is (minX, minY, minZ), c2 is (maxX, maxY,
 		//maxZ), and d is the depth, which starts at 1.
+	  
+	  
 		Octree(Vec3f c1, Vec3f c2, int d) {
 			corner1 = c1;
 			corner2 = c2;
@@ -585,6 +607,7 @@ void applyGravity(vector<Ball*> &balls) {
 }
 
 //Returns whether two balls are colliding
+//A1
 bool testBallBallCollision(Ball* b1, Ball* b2) {
 	//Check whether the balls are close enough
 	float r = b1->r + b2->r;
@@ -608,6 +631,7 @@ bool testBallBallCollision(Ball* b1, Ball* b2) {
 }
 
 //Handles all ball-ball collisions
+//A3
 void handleBallBallCollisions(vector<Ball*> &balls, Octree* octree) {
 	vector<BallPair> bps;
 	
@@ -652,6 +676,7 @@ Vec3f wallDirection(Wall wall) {
 }
 */
 //Returns whether a ball and a wall are colliding
+//A2
 bool testBallWallCollision(Ball* ball, Wall* wall) {
 	Vec3f dir = wall->direction;
 	//Check whether the ball is far enough in the "dir" direction, and whether
@@ -669,6 +694,7 @@ bool testBallWallCollision(Ball* ball, Wall* wall) {
 }
 
 //Handles all ball-wall collisions
+//A4
 void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 	
 	vector<BallWallPair> bwps;
@@ -698,6 +724,7 @@ void performUpdate(vector<Ball*> &balls, Octree* octree) {
 	applyGravity(balls);
 	handleBallBallCollisions(balls, octree);
 	handleBallWallCollisions(balls, octree);
+	cout<<(octree->numBalls)<<endl;
 }
 
 //Advances the state of the balls by t.  timeUntilUpdate is the amount of time
@@ -747,8 +774,8 @@ void handleKeypress(unsigned char key, int x, int y) {
 			cleanup();
 			exit(0);
 		case ' ':
-			//Add 20 balls with a random position, velocity, radius, and color
-			for(int i = 0; i < 10; i++) {
+			//Add balls with a random position, velocity, radius, and color
+			for(int i = 0; i < 100; i++) {
 				Ball* ball = new Ball();
 				ball->pos = Vec3f(8 * randomFloat() - 4,
 								  8 * randomFloat() - 4,
@@ -757,9 +784,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 								8 * randomFloat() - 4,
 								8 * randomFloat() - 4);
 				ball->r = 0.1f * randomFloat() + 0.1f;
-				ball->color = Vec3f(0.6f * randomFloat() + 0.2f,
-									0.6f * randomFloat() + 0.2f,
-									0.6f * randomFloat() + 0.2f);
+				ball->m = 0.1f * randomFloat() + 0.1f;
 				_balls.push_back(ball);
 				_octree->add(ball);
 			} break;
@@ -859,7 +884,6 @@ void drawScene() {
 	glTranslatef(0.0f, 0.0f, -25.0f);
 	
 	Lightning(); //svjetlo ne rotira
-	
 	glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
 	//Lightning(); //svjetlo rotira
 	
@@ -917,7 +941,7 @@ int main(int argc, char** argv) {
 	glutCreateWindow("Collision Detection");
 	initRendering();
 	
-	
+	//walls
 	l.direction = Vec3f(-1, 0, 0);
 	r.direction=Vec3f(1, 0, 0);
 	f.direction=Vec3f(0, 0, -1);
@@ -925,12 +949,14 @@ int main(int argc, char** argv) {
 	t.direction=Vec3f(0, 1, 0);
 	b.direction=Vec3f(0, -1, 0);
 	
+	//octree
 	_octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
 	
 	
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
 	glutReshapeFunc(handleResize);
+	
 	glutTimerFunc(TIMER_MS, update, 0);
 	
 	glutMainLoop();

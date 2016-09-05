@@ -7,7 +7,7 @@ void handleResize(int w, int h) {
 	gluPerspective(45.0, (float)w / (float)h, 1.0, 200.0);
 }
 
-void handleKeypress(unsigned char key, int x, int y) {
+void handleKeypress2(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
 			//TwTerminate();

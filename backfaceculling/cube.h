@@ -1,2 +1,0 @@
-void drawCube();
-void drawTransparentCube();

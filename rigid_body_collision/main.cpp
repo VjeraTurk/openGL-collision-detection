@@ -19,6 +19,7 @@
 const float GRAVITY =  0.0f;
 using namespace std;
 
+int selection=1;
 int flag=1; //colide = 0 don't colide =-1;
 int w_flag=1; //colide = 0 don't colide =-1;
 float randomFloat() {
@@ -491,7 +492,7 @@ void responce(BallPair pair){
 
 void check_wall_collision(BallWallPair pair){
   
-  /*
+  
   Ball *b = pair.ball;
   Wall *w = pair.wall;
   
@@ -500,7 +501,7 @@ void check_wall_collision(BallWallPair pair){
   if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
    w_flag=0;
   }
-  */
+  
 }
 
 void w_responce(BallWallPair pair){
@@ -556,8 +557,11 @@ void drawBalls(Ball *head){
 void update(int value) {
     //cout<<flag<<endl;
   
-  
-     if(flag && w_flag)
+    switch(selection){
+      
+      case 1:
+	
+	    if(flag && w_flag)
         {
            move_ball(&ball1,t);
 	   //move_triangle(&g_tri2,t);
@@ -569,26 +573,43 @@ void update(int value) {
 	  
 	}
    
-   if(!flag)
-    {
-	  responce(bp);  
+	if(!flag)
+	  {
+		responce(bp);  
+	  }
+	  
+	  if(!w_flag){
+		w_responce(bw);  
+		w_responce(bw2);      
+	  }
+	  pullBall(&ball1);
+	  pullBall(&ball2);
+	break;
+ 
+      case 2:
+	  moveBalls(AllBalls);
+	  applyGravity(AllBalls);
+	 break;
+	
     }
-    
-    if(!w_flag){
-	  w_responce(bw);  
-	  w_responce(bw2);      
-    }
-    pullBall(&ball1);
-    pullBall(&ball2);
-   
-    moveBalls(AllBalls);
-    applyGravity(AllBalls);
     
     glutPostRedisplay();
     glutTimerFunc(TIMER_MS, update, 0);
 }
 
-
+void elastic_collision(){
+  
+    drawBall(ball1); 
+    drawBall(ball2); 
+    
+  
+}
+void multiple_balls_collision(){
+  
+     drawBalls(AllBalls);
+    
+  
+}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -606,15 +627,19 @@ void display()
     glColor3f(1,1,1);
    // drawCube(BOX_SIZE);
    
-    drawBall(ball1); 
-    drawBall(ball2); 
-    
+    switch(selection){
+      
+      case 1 : elastic_collision();
+		 break;
+      case 2 : multiple_balls_collision();
+		break;
+    }
+
     
     //drawBall(*g_tri1.ball);
     //drawTriangle(g_tri1);
    
-    //drawBalls(AllBalls);
-    
+ 
     glutSwapBuffers();
 }
 
@@ -669,13 +694,15 @@ Ball *create_list(int max){
    
    //ball 1
     ball1.pos=Vec3f(-2,0.4,0);
-    ball1.v=Vec3f(4,0,0);  
+    ball1.v=Vec3f(0,-5,0);  
+    
     ball1.r=0.4f;
     ball1.color= Vec3f(1,0,0);
     
     //ball 2
     ball2.pos=Vec3f(2,0.4,0);
-    ball2.v=Vec3f(-4,0,0);  
+    ball2.v=Vec3f(0,5,0);  
+   
     ball2.r=0.4f;
     ball2.color= Vec3f(1,1,0);
     
@@ -689,16 +716,26 @@ Ball *create_list(int max){
  
     bw.ball = &ball2;
     bw.wall = &bottom;
-    
 
     bw2.ball = &ball1;
     bw2.wall = &top;
 
 
-    //AllBalls=create_list(40);
+    AllBalls=create_list(40);
 
 }
-  
+ 
+void handleKeypress(unsigned char key, int x, int y) {
+	switch (key) {
+		case 27: //Escape key
+			//TwTerminate();
+			exit(0);
+		case '1': selection=1;
+			break;
+		case '2':selection=2;
+	}
+}
+
 int main(int argc,char **argv)
 {
     glutInit(&argc,argv);
