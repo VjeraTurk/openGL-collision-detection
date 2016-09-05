@@ -9,7 +9,7 @@ using namespace std;
 
 const float ALPHA = 0.6f;
 
-void drawCube(float box_size){
+void drawCube2(float box_size){
   
   glBegin(GL_QUADS);
   

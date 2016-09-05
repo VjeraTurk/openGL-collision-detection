@@ -4,15 +4,16 @@
 #include <ctime>
 #include <iostream>
 #include <stdlib.h>
-#include <vector>
+//#include <vector>
 #include <math.h>
 //#include <AntTweakBar.h>
-
 #include "vector3f.h"
 #include "vec3f.h"
+
 #include "cube.h"
 #include "lighting.h"
 #include "navigation.h"
+#include "octree.h"
 
 #define RED 40
 
@@ -21,10 +22,8 @@
 const float GRAVITY =  8.0f;
 
 int selection=1;
-
-using namespace std;
-
-struct Ball{
+/*
+ struct Ball{
   Vec3f pos; // position
   Vec3f v; //velocity with direction
   
@@ -37,6 +36,7 @@ struct Ball{
   float r;
   Vec3f color;
 };
+ */
 
 struct BallPair{
   Ball* bA;
@@ -45,17 +45,13 @@ struct BallPair{
   BallPair* next;
 };
 
- Ball ball1;
- Ball ball2;
- Ball testBall;
- BallPair bp;
-
 struct Wall{
-  Vec3f direction;    
-  float size;
+  
+      Vec3f direction;
+      float t_red;
 };
 
-Wall bottom, top;
+
 
 class BallWallPair {
   
@@ -63,282 +59,139 @@ public:
 	Ball* ball;
 	Wall* wall;
 };
+//all selections 
+const float ALPHA = 0.6f;
 
+//selection 1
+ Ball ball1;
+ Ball ball2;
+ Ball testBall;
+ BallPair bp;
  BallWallPair bw, bw2;
-// hash table 0000 0001 0010 0011 ... lista? Kako
-/*
- class Point{
+ Wall bottom, top;
 
-private:
-    float p[3];
+//selection 2 
+ Ball* AllBalls;
+ BallPair* AllBallPairs;
+ BallPair* AllBallWallPairs;
+ Wall l,r,f,n,b,c;
+
+//selection 3
+ Node root;
+
+//all
+void drawCube(float box_size);
+float randomFloat();
+void update(int value);
+void display();
+
+//selection 1
+void elastic_collision();
+
+    void drawBall(Ball ball);
   
- 
-    
-public:
+    void move_ball(Ball *ball, float dt);
+    void pullBall(Ball *ball);
+    int check_collision(BallPair pair);
+    int check_wall_collision(BallWallPair pair);
+    void responce(BallPair pair);
+    void w_responce(BallWallPair pair);
+
+//selection 2
+void multiple_balls_collision();
+
+    Ball *create_list(int max);
+
+    void drawBalls(Ball *head);
+
+    void applyGravity(Ball *head);
+    void moveBalls(Ball *head);
+
+    void bruteForce(Ball *head);
+    void ballsWallsCollisions(Ball *head);
+
+
+
+void drawCube(float box_size){
   
-  Point(){
-    
-  }
+  glBegin(GL_QUADS);
   
-  Point(float x, float y, float z) {
-	p[0] = x;
-	p[1] = y;
-	p[2] = z;
-  } 
-///ne znamm :( WHY??
- float operator[](int index) const{
-   	return p[index];
-  }
-  
- float& operator[](int index) {
-	return p[index];
-  }
-  
-  
-Point operator+(Point p2){
-  float x,y,z;
-   
-   x = p[0] + p2[0];
-   y= p[1] + p2[1];
-   z = p[2] + p2[2];
-   
-   Point result=Point(x,y,z);
-   
-   return result;
-}
+	if(b.t_red)b.t_red--;
+	if(c.t_red)c.t_red--;
+	if(n.t_red)n.t_red--;	
+	if(f.t_red)f.t_red--; //Where ever you areee
+	if(l.t_red)l.t_red--;
+	if(r.t_red)r.t_red--;		
 
-};
- */
-class Point{
+	//Top face
 
-
-public:
-
-  float x,y,z;
-
-  Point(){
-    
-  }
-  
-  Point(float _x, float _y, float _z) {
-	x = _x;
-	y = _y;
-	z = _z;
-  } 
-///ne znamm :( WHY??
-
-Point operator+(Point p2){
-  float x_,y_,z_;
-   
-   x_ = x + p2.x;
-   y_= y + p2.y;
-   z_ = z + p2.z;
-   
-   Point result=Point(x_,y_,z_);
-   
-   return result;
-}
-
-};
-
-struct Node {
-  Point center;
-// Center point of octree node (not strictly needed)
-  float halfWidth;
-//Vec3f corner1; //(minX, minY, minZ)
-//Vec3f corner2; //(maxX, maxY, maxZ)
-
-Node *pChild[8];
-// Pointers to the eight children nodes
-Ball *pObjList; // Linked list of objects contained at this node
-};
-
-
-void drawOctree(Node *pTree);
-Node *BuildOctree(Point center, float halfWidth, int stopDepth);
-void InsertObject(Node *pTree, Ball *pObject);
-void TestAllCollisions(Node *pTree);
-
-void drawBall(Ball ball);
-void move_ball(Ball *ball, float dt);
-
-int check_collision(BallPair pair);
-int check_wall_collision(BallWallPair pair);
-void responce(BallPair pair);
-void w_responce(BallWallPair pair);
-
-Ball *create_list(int max);
-
-
-Node root;
-
-Node *BuildOctree(Point center, float halfWidth, int stopDepth)
-{
-    if (stopDepth < 0)return NULL;
-      
-    else {
-      // Construct and fill in â€™rootâ€™ of this subtree
-	Node *pNode = new Node;
-	pNode->center = center;
-	pNode->halfWidth = halfWidth;
-	pNode->pObjList = NULL;
-
-      // Recursively construct the eight children of the subtree
-      Point offset;//Point(0,0,0);
-
-      float step = halfWidth * 0.5f;
-      
-	  for (int i = 0; i < 8; i++) {
-	    offset.x= ((i & 1) ? step : -step);
-	    offset.y= ((i & 2) ? step : -step);
-	    offset.z= ((i & 4) ? step : -step);
-	    
-	    //cout<<"offset: "<<offset.x<<" "<<offset.y<<" "<<offset.z<<endl;
-	    pNode->pChild[i] = BuildOctree(center+offset, step, stopDepth - 1);
-	  }
-
-      return pNode;
-    }
-}
-
-void InsertObject(Node *pTree, Ball *pObject)
-{
- //cout<<root.center;
-    
-    int index = 0, straddle = 0;
-// Compute the octant number [0..7] the object sphere center is in
-// If straddling any of the dividing x, y, or z planes, exit directly
-  
-    for (int i=0; i< 3; i++){
-   
-    float delta = pObject->pos[i] - pTree->center.x;
-    
-     cout<<"delta"<<abs(delta)<<endl;
-    cout<<pTree->halfWidth + pObject->r<<endl;
+	glColor4f(1,-(c.t_red/50)+ 1, -(c.t_red/50)+ 1, ALPHA);	
+	glNormal3f(0.0, -1.0f, 0.0f);
 	
-      if(abs(delta) < pTree->halfWidth + pObject->r)  {
-	//cout<<"i:"<<i<<endl;
-	 //cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
 	
-	straddle = 1;
-	cout<<"i "<<i<<endl;
-	//cout<<i;
-	break;
-      }
-      
-      if(delta > 0.0f) index |= (1<<i);
+	//Bottom face
 
-     /* 
-      //ZYX ubaci 1 na Z X ili Y mjesto u indexu (little-endian format)
-      //index nije polje, vec int- a ovime mijenjamo njegovu binarnu vrijednos
-    }
-   // cout<<":"<<straddle<<endl;
-    
-    if(!straddle){
-       // cout<<index;
-    //cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;
-    //cout<<"str:"<<straddle<<endl;
-    //cout<<"indx:"<<index<<endl;
-    //cout<<"hw:"<<pTree->halfWidth<<endl;
-      
-      if(pTree->pChild[index] == NULL){
-	//cout<<"case 2 ";
-	  pTree = new Node;
-	  pTree = BuildOctree(pTree->center,pTree->halfWidth,1);
-	 //pTree->pChild[index]->pChild[0]=NULL;
-	  InsertObject(pTree->pChild[index], pObject);
-	  //cout<<"center:"<<pTree->center.x<<" "<<pTree->center.y<<" "<<pTree->center.z;
-	 //cout<<"center:"<<pTree->pChild[0]->center.x<<" "<<pTree->pChild[0]->center.y<<" "<<pTree->pChild[0]->center.z;
-      
+	glColor4f(1,-(b.t_red/50)+ 1, -(b.t_red/50)+ 1, ALPHA);	
+	glNormal3f(0.0, 1.0f, 0.0f);
 	
-      }else{
-	  
-	//InsertObject(pTree->pChild[index], pObject);
-	  //cout<<"case 4 ";
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
 	
-      }
+	//Left face
 	
+
+	glColor4f(1,-(l.t_red/50)+ 1, -(l.t_red/50)+ 1, ALPHA);	
 	
-    }else{
-      //postavi ga kao prvog u listi!!!
-      pObject->next = pTree->pObjList;
-      pTree->pObjList = pObject;
-   */ 
-      
-    }
-    /*
-    cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;; 
-    cout<<"str:"<<straddle<<endl;*/
-    cout<<"indx:"<<index<<endl;
-    cout<<"hw:"<<pTree->halfWidth<<endl;
+
+	glNormal3f(1.0, 0.0f, 0.0f);
+
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	
+	//Right face
+	glColor4f(1,-(r.t_red/50)+ 1, -(r.t_red/50)+ 1, ALPHA);	
+
+	glNormal3f(-1.0, 0.0f, 0.0f);
+	
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+		
+	//near face
+        glColor4f(1,-(n.t_red/50)+ 1, -(n.t_red/50)+ 1, ALPHA);	
+
+	glNormal3f(0.0, 0.0f, -1.0f);
+	
+	glVertex3f(-box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
+	
+	//Far face
+	glColor4f(1,-(f.t_red/50)+ 1, -(f.t_red/50)+ 1, ALPHA);	
+
+	glNormal3f(0.0, 0.0f, 1.0f);
+	
+	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
+	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, box_size / 2, -box_size / 2);
+	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
+	
+	glEnd();
+	
   
 }
-
-
-// Tests all objects that could possibly overlap due to cell ancestry and coexistence
-// in the same cell. Assumes objects exist in a single cell only, and fully inside it
-void TestAllCollisions(Node *pTree)
-{
-    cout<<"tutut";
-// Keep track of all ancestor object lists in a stack
-    const int MAX_DEPTH = 40;
-    static Node *ancestorStack[MAX_DEPTH];
-    static int depth = 0; // ’Depth == 0’ is invariant over calls
-// Check collision between all objects on this level and all
-// ancestor objects. The current level is included as its own
-// ancestor so all necessary pairwise tests are done
-    ancestorStack[depth++] = pTree;
-    for (int n = 0; n < depth; n++) {
-    Ball *pA, *pB;
-    for (pA = ancestorStack[n]->pObjList; pA; pA = pA->next) {
-	for (pB = pTree->pObjList; pB; pB = pB->next) {
-// Avoid testing both A->B and B->A
-	  if (pA == pB) break;
-// Now perform the collision test between pA and pB in some manner
-	  //////TestCollision(pA, pB);
-	  }
-	}
-    }
-// Recursively visit all existing children
-    for (int i = 0; i < 8; i++)
-    if (pTree->pChild[i]) 
-      TestAllCollisions(pTree->pChild[i]);
-
-  // Remove current node from ancestor stack before returning
-  depth--;
-}
-
-void drawOctree(Node *pTree){
-  
-  //cout<<"dO:"<<pTree->halfWidth<<endl;
- 
-  if(pTree->pChild[0]!= NULL){
-    //cout<<"s djecom"<<endl;
-    for(int i=0; i < 8;i++){
-      drawOctree(pTree->pChild[i]);
-	//glColor3f(0,1,1);
-	//glutWireCube(pTree->pChild[i]->halfWidth);
-      
-    }
-    
-  }else if(pTree->pChild[0] == NULL){
-    
-    //cout<<"bez djece"<<endl;
-    glPushMatrix();
-    glDisable(GL_LIGHTING);
-    glColor3f(0,1,0);
-  //  glTranslatef(pTree->center.x-pTree->halfWidth,pTree->center.y-pTree->halfWidth,pTree->center.z-pTree->halfWidth);
-    glTranslatef(pTree->center.x,pTree->center.y,pTree->center.z);
-    //glutWireCone(1,2,20,1);
-    glutWireCube(pTree->halfWidth);
-    //glutWireCube(1);
-    glEnable(GL_LIGHTING);
-    glPopMatrix();
- 
-    
-  }
-  
-
+float randomFloat() {
+	return (float)rand() / ((float)RAND_MAX + 1);
 }
 
 void drawBall(Ball ball)
@@ -353,9 +206,9 @@ void drawBall(Ball ball)
     glPopMatrix();
     
 }
-const float TIME_BETWEEN_UPDATES = 0.001f;
+const float TIME_BETWEEN_UPDATES = 0.01f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
-const float t =0.01;
+const float t =0.01f;
 
 void move_ball(Ball *ball, float dt){
   
@@ -415,6 +268,7 @@ int check_wall_collision(BallWallPair pair){
   Vec3f dir = w->direction;
   
   if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
+   w->t_red=50.0f;
    return 1;
   }
    return 0;
@@ -428,9 +282,7 @@ void w_responce(BallWallPair pair){
   b->v -= 2 * dir * b->v.dot(dir);
 }
 
-float randomFloat() {
-	return (float)rand() / ((float)RAND_MAX + 1);
-}
+
 Ball *create_list(int max){   
     Ball* head;
     Ball* temp=NULL;
@@ -451,13 +303,12 @@ Ball *create_list(int max){
       
       else  temp->next = ball;
       temp = ball;
-     cout<<ball->pos[3]<<endl;
+    // cout<<ball->pos[3]<<endl;
   }
   return head;
 }
 
-Ball* AllBalls;
-BallPair* AllBallPairs;
+
 
 void applyGravity(Ball *head) {
   Ball *temp;
@@ -479,7 +330,23 @@ void drawBalls(Ball *head){
   Ball *temp;
   
  for(temp=head; temp!=NULL; temp = temp->next){
-    drawBall(*temp);
+    glPushMatrix();
+	
+      glTranslatef(temp->pos[0], temp->pos[1], temp->pos[2]);
+		
+		if(temp->t_red){
+		
+		  glColor3f(1, (-temp->t_red/50)+1,(-temp->t_red/50)+1);  
+		  temp->t_red--;
+		  
+		}else{
+		  
+		glColor3f(1, 1, 1);
+		  
+		}	//glColor3f(temp->color[0], temp->color[1], temp->color[2]);
+		
+		glutSolidSphere(temp->r, 12, 12); //Draw a sphere
+		glPopMatrix(); 
   }
 
 }
@@ -506,10 +373,27 @@ void bruteForce(Ball *head){
    
  }
   
-  
-  
-  
 }
+// l,r,f,n,b,c;
+Wall *walls[]={&l,&r,&f,&n,&b,&c};
+void ballsWallsCollisions(Ball *head){
+  
+	Ball *temp;
+	 
+	for(temp=head; temp!=NULL; temp = temp->next){
+		
+	    for(int j = 0; j < 6; j++) {
+			
+			BallWallPair bwp;
+			bwp.ball = temp;
+			bwp.wall = walls[j];
+			
+			if(check_wall_collision(bwp))w_responce(bwp);
+		}
+	}
+
+}
+	
 
 void update(int value) {
  
@@ -532,7 +416,9 @@ void update(int value) {
 	  moveBalls(AllBalls);
 	  applyGravity(AllBalls);
 	  bruteForce(AllBalls);
-	 break;
+	  ballsWallsCollisions(AllBalls);
+	 
+	  break;
       case 3:
 	
 	break;
@@ -590,9 +476,12 @@ void display()
 
         switch(selection){
       
-      case 1 : elastic_collision();
+      case 1 :   
+	    elastic_collision();
 		 break;
-      case 2 : multiple_balls_collision();
+      case 2 : 
+	      drawCube(BOX_SIZE);  
+	      multiple_balls_collision();
 		break;	
       case 3 : balls_in_octree();
     }
@@ -602,6 +491,7 @@ void display()
     
     glutSwapBuffers();
 }
+
  void init(){
      
    //ball 1
@@ -628,12 +518,19 @@ void display()
     bw.wall = &bottom;
  
     bw2.ball = &ball1;
-    bw2.wall = &top;
+    bw2.wall = &bottom;
     
     
     AllBalls=create_list(100);
     
-    
+    	//walls
+	l.direction = Vec3f(-1, 0, 0);
+	r.direction=Vec3f(1, 0, 0);
+	f.direction=Vec3f(0, 0, -1);
+	n.direction=Vec3f(0, 0, 1);
+	c.direction=Vec3f(0, 1, 0);
+	b.direction=Vec3f(0, -1, 0);
+	
    //test ball
  
     testBall.pos=Vec3f(3,0,0);
@@ -671,11 +568,13 @@ void handleKeypress2(unsigned char key, int x, int y) {
 		case '2': selection=2;
 		      break;
 		case '3': selection=3;
+		      break;
+		case '0':
+			init();
+		  break;
 	  
 	}
 }	
-
-		
 	
 int main(int argc,char **argv)
 {
