@@ -17,7 +17,7 @@
 
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
-const float GRAVITY =  8.0f;
+const float GRAVITY =  0.0f;
 
 int selection=1;
 /*
@@ -210,7 +210,9 @@ void move_ball(Ball *ball, float dt){
   
     glPushMatrix();
     ball->pos+=ball->v * dt;
-    //cout <<"moved"<<endl;
+   
+    cout <<"x "<<ball->v[0]<<endl;
+    
     glPopMatrix();
   
 }
@@ -251,9 +253,28 @@ void responce(BallPair pair){
    Ball *bA = pair.bA;
    Ball *bB = pair.bB;
   
+   float m_1= bA->m;
+   float m_2= bB->m;
+   
+   float v_1=bA->v[0];
+   float v_2=bB->v[0];   
+   /*
+   	v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+   	
+   	v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   */
+   
+   bA->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+   bB->v[0]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
+  
+   /*
    Vec3f displacement = (bA->pos - bB->pos).normalize();
-  bA->v -= 2 * displacement * bA->v.dot(displacement);
-  bB->v -= 2 * displacement * bB->v.dot(displacement);
+   bA->v -= 2 * displacement * bA->v.dot(displacement);
+   bB->v -= 2 * displacement * bB->v.dot(displacement);
+*/
+  
+   
+   
 }
 
 int check_wall_collision(BallWallPair pair){
@@ -492,17 +513,21 @@ void display()
      
    //ball 1
     ball1.pos=Vec3f(-2,0.4,0);
-    ball1.v=Vec3f(4,0,0);  
+    ball1.v=Vec3f(25,0,0);  
+    ball1.m=0.5f;
     
-    ball1.r=0.4f;
+    
+    ball1.r=0.5f;
     ball1.color= Vec3f(1,0,0);
+    
     
     //ball 2
     ball2.pos=Vec3f(2,0.4,0);
-    ball2.v=Vec3f(-4,0,0);  
-   
-    ball2.r=0.4f;
-    ball2.color= Vec3f(1,1,0);
+    ball2.v=Vec3f(-10,0,0);  
+    ball2.m=0.8f;
+    
+    ball2.r=0.8f;
+    ball2.color= Vec3f(0,0,1);
     
     bp.bA = &ball1;
     bp.bB = &ball2;
