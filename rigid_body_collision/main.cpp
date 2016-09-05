@@ -16,7 +16,7 @@
 
 #define BOX_SIZE 6
 #define MAX_OCTREE_DEPTH 6
-const float GRAVITY =  8.0f;
+const float GRAVITY =  0.0f;
 using namespace std;
 
 int flag=1; //colide = 0 don't colide =-1;
@@ -475,6 +475,7 @@ void check_collision(BallPair pair){
      
   }else flag=1;
 
+  
 }
 
 
@@ -559,8 +560,9 @@ void update(int value) {
      if(flag && w_flag)
         {
            move_ball(&ball1,t);
-	   move_triangle(&g_tri2,t);
-	   move_ball(g_tri1.ball,t);
+	   //move_triangle(&g_tri2,t);
+	   move_ball(&ball2,t);
+	   
 	   check_collision(bp);
 	   check_wall_collision(bw);
            check_wall_collision(bw2);
@@ -605,10 +607,14 @@ void display()
    // drawCube(BOX_SIZE);
    
     drawBall(ball1); 
-    drawBall(*g_tri1.ball);
-    drawTriangle(g_tri1);
+    drawBall(ball2); 
+    
+    
+    //drawBall(*g_tri1.ball);
+    //drawTriangle(g_tri1);
    
-    drawBalls(AllBalls);
+    //drawBalls(AllBalls);
+    
     glutSwapBuffers();
 }
 
@@ -638,14 +644,8 @@ Ball *create_list(int max){
 }
 
  void init(){
-     
-   //ball 1
-    ball1.pos=Vec3f(-2,0.4,0);
-    ball1.v=Vec3f(4,0,0);  
-    ball1.r=0.4f;
-    ball1.color= Vec3f(1,1,0);
-    
-  //triangle 1
+   /* 
+   //triangle 1
     g_tri1.v0.x =  0.1f;
     g_tri1.v0.y =  0.2f;
     g_tri1.v0.z =  0.5f;
@@ -661,10 +661,24 @@ Ball *create_list(int max){
    // g_tri1.vNormal = vector3f( 0.0f, 0.0f, 0.0f );
   
     g_tri1.vNormal = vector3f( 1.0f, 1.0f, 1.0f );
-    
+   
     //triangle ball
     g_tri1.ball=&ball2;
-    createBoundingSphere( &g_tri1 ); 
+    createBoundingSphere( &g_tri1 );   
+    */
+   
+   //ball 1
+    ball1.pos=Vec3f(-2,0.4,0);
+    ball1.v=Vec3f(4,0,0);  
+    ball1.r=0.4f;
+    ball1.color= Vec3f(1,0,0);
+    
+    //ball 2
+    ball2.pos=Vec3f(2,0.4,0);
+    ball2.v=Vec3f(-4,0,0);  
+    ball2.r=0.4f;
+    ball2.color= Vec3f(1,1,0);
+    
     
     bp.bA = &ball1;
     bp.bB = &ball2;
@@ -681,7 +695,7 @@ Ball *create_list(int max){
     bw2.wall = &top;
 
 
-    AllBalls=create_list(40);
+    //AllBalls=create_list(40);
 
 }
   
