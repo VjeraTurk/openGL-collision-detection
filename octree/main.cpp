@@ -17,7 +17,7 @@
 
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
-const float GRAVITY =  0.0f;
+const float GRAVITY =  20.0f;
 
 int selection=1;
 /*
@@ -109,6 +109,7 @@ void multiple_balls_collision();
 
 
 void drawCube(float box_size){
+  
   
   glBegin(GL_QUADS);
   
@@ -202,16 +203,17 @@ void drawBall(Ball ball)
     glPopMatrix();
     
 }
-const float TIME_BETWEEN_UPDATES = 0.01f;
+const float TIME_BETWEEN_UPDATES = 0.001f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
 const float t =0.01f;
 
 void move_ball(Ball *ball, float dt){
   
     glPushMatrix();
+    
     ball->pos+=ball->v * dt;
    
-    cout <<"x "<<ball->v[0]<<endl;
+    //cout <<"y "<<ball->v[1]<<endl;
     
     glPopMatrix();
   
@@ -226,10 +228,17 @@ int check_collision(BallPair pair){
    Ball *bA= pair.bA;
    Ball *bB= pair.bB;
    
+
    float r = bA->r + bB->r;
    //cout<<r<<endl;
- 
+  
+   
    if ((bA->pos - bB->pos).magnitudeSquared() < r*r){ 
+     
+   if(isNull(bA->v)|| isNull(bB->v)){
+      cout<<"stojim"<<endl;
+       return 0;
+   }   
      
      Vec3f netVelocity = bA->v - bB->v;
      Vec3f displacement = bA->pos - bB->pos;
@@ -239,6 +248,8 @@ int check_collision(BallPair pair){
      if(netVelocity.dot(displacement)<0){
       bA->t_red = RED;
       bB->t_red = RED;
+      
+     
       return 1;
     }  
     
@@ -250,7 +261,8 @@ int check_collision(BallPair pair){
 }
 
 void responce(BallPair pair){
-   Ball *bA = pair.bA;
+  
+  Ball *bA = pair.bA;
    Ball *bB = pair.bB;
   
    float m_1= bA->m;
@@ -263,15 +275,32 @@ void responce(BallPair pair){
    	
    	v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
    */
-   
+ 
    bA->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
    bB->v[0]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
   
-   /*
+   
+     
+   v_1=bA->v[1];
+   v_2=bB->v[1]; 
+   
+   bA->v[1]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+   bB->v[1]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
+   
+
+   v_1=bA->v[2];
+   v_2=bB->v[2]; 
+   
+   bA->v[2]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+   bB->v[2]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
+   
+   
+   
+ /*
    Vec3f displacement = (bA->pos - bB->pos).normalize();
    bA->v -= 2 * displacement * bA->v.dot(displacement);
    bB->v -= 2 * displacement * bB->v.dot(displacement);
-*/
+  */
   
    
    
@@ -285,20 +314,74 @@ int check_wall_collision(BallWallPair pair){
   Vec3f dir = w->direction;
   
   if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
-   w->t_red=50.0f;
+   w->t_red=RED;
    return 1;
   }
    return 0;
 }
 
+/*
 void w_responce(BallWallPair pair){
+  
+  
+   Ball *b = pair.ball;
+  
+   float m_1= b->m;
+   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0
+   
+   float v_1;
+   float v_2=0;
+
+  //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+  //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   
+   v_1=b->v[0];
+   b->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+
+   v_1 = b->v[1];
+   b->v[1]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+
+   v_1 = b->v[2];
+   b->v[2]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+  
+   
+}
+*/
+
+/* 
+ void w_responce(BallWallPair pair){
+  
+   //prolaze kroz zidove
+   
    Ball *b = pair.ball;
    Wall *w = pair.wall;
-  
-  Vec3f dir = w->direction.normalize();
-  b->v -= 2 * dir * b->v.dot(dir);
-}
+   
+   Vec3f d=w->direction;
+   
+   float m_1= b->m;
+   float m_2= 1;
+   
+   Vec3f v_1=b->v;
+   Vec3f v_2=d;
+   
+   b->v= v_1*(m_1 - m_2) + (v_2*m_2)*2 / (m_1 + m_2) ;
 
+
+   	//v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+   	
+   	//v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   
+}*/
+
+void w_responce(BallWallPair pair){
+  
+   Ball *b = pair.ball;
+   Wall *w = pair.wall;
+
+   Vec3f dir = w->direction.normalize();
+   b->v -= 2 * dir * b->v.dot(dir);
+
+}
 
 Ball *create_list(int max){   
     Ball* head;
@@ -314,6 +397,8 @@ Ball *create_list(int max){
       ball->r = 0.1f * randomFloat() + 0.1f;
       ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
   
+      ball->m=ball->r;
+      
       ball->next=NULL;
       
       if(!temp)head=ball;
@@ -424,6 +509,7 @@ void update(int value) {
 	   pullBall(&ball2);
 	   
 	   if(check_collision(bp)) responce(bp);
+	   
 	   if(check_wall_collision(bw))w_responce(bw);
            if(check_wall_collision(bw2))w_responce(bw2);
 	  
@@ -448,10 +534,22 @@ void update(int value) {
 
 
 void elastic_collision(){
-  
-    drawBall(ball1); 
-    drawBall(ball2); 
-    
+  glPushMatrix();
+  glTranslatef(0,-BOX_SIZE/2,0);
+    glBegin(GL_QUADS);
+	  glColor3f(1,1,1);	
+	  glNormal3f(0.0, 1.0f, 0.0f);
+	  //glNormal3f(0.0, -1.0f, 0.0f);		
+	  glVertex3f(-BOX_SIZE / 2, 0, -BOX_SIZE / 2);
+	  glVertex3f(BOX_SIZE / 2, 0, -BOX_SIZE / 2);
+	  glVertex3f(BOX_SIZE / 2, 0, BOX_SIZE / 2);
+	  glVertex3f(-BOX_SIZE / 2, 0, BOX_SIZE / 2);
+      glEnd();
+      
+   glPopMatrix(); 
+      drawBall(ball1); 
+      drawBall(ball2); 
+      
   
 }
 void multiple_balls_collision(){
@@ -476,7 +574,7 @@ void display()
     glLoadIdentity();
    // glTranslatef(0.0, 0.0, -(dis+ddis));
 
-    glTranslatef(0.0, 0.0, -30.0f);
+    glTranslatef(0.0, 0.0, -20.0f);
 
     glRotated(elev+delev, 1.0, 0.0, 0.0);
     glRotated(azim+dazim, 0.0, 1.0, 0.0);
@@ -512,21 +610,22 @@ void display()
  void init(){
      
    //ball 1
-    ball1.pos=Vec3f(-2,0.4,0);
-    ball1.v=Vec3f(25,0,0);  
-    ball1.m=0.5f;
+    ball1.m=0.4f;
+    ball1.r=0.5f; 
+   
+    ball1.pos=Vec3f(-2,-BOX_SIZE/2+ball1.r,0);
+    ball1.v=Vec3f(2,0,2);  
     
-    
-    ball1.r=0.5f;
     ball1.color= Vec3f(1,0,0);
     
     
     //ball 2
-    ball2.pos=Vec3f(2,0.4,0);
-    ball2.v=Vec3f(-10,0,0);  
-    ball2.m=0.8f;
+    ball2.r=1.0f;
+    ball2.m=2.0f;
     
-    ball2.r=0.8f;
+    ball2.pos=Vec3f(2,-BOX_SIZE/2+ball2.r,-1);
+    ball2.v=Vec3f(-10,0,4);  
+    
     ball2.color= Vec3f(0,0,1);
     
     bp.bA = &ball1;
@@ -544,13 +643,13 @@ void display()
     
     AllBalls=create_list(100);
     
-    	//walls
-	l.direction = Vec3f(-1, 0, 0);
-	r.direction=Vec3f(1, 0, 0);
-	f.direction=Vec3f(0, 0, -1);
-	n.direction=Vec3f(0, 0, 1);
-	c.direction=Vec3f(0, 1, 0);
-	b.direction=Vec3f(0, -1, 0);
+    //walls
+      l.direction = Vec3f(-1, 0, 0);
+      r.direction=Vec3f(1, 0, 0);
+      f.direction=Vec3f(0, 0, -1);
+      n.direction=Vec3f(0, 0, 1);
+      c.direction=Vec3f(0, 1, 0);
+      b.direction=Vec3f(0, -1, 0);
 	
    //test ball
  
@@ -561,7 +660,7 @@ void display()
     root.halfWidth=12;
     //root.center=Point(root.halfWidth,0,0);
     
-    BuildOctree(root.center,root.halfWidth,1);   
+    //BuildOctree(root.center,root.halfWidth,1);   
 
 }
 

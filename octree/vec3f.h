@@ -29,11 +29,15 @@ class Vec3f {
 		Vec3f normalize() const;
 		float dot(const Vec3f &other) const;
 		Vec3f cross(const Vec3f &other) const;
+		bool operator==( Vec3f &other);
+		
 };
 Vec3f crossProduct( const Vec3f &v1,  const Vec3f &v2 );
 float dotProduct( const Vec3f &v1,  const Vec3f &v2 );
 
 Vec3f operator*(float scale, const Vec3f &v);
+bool isNull(Vec3f v);
+
 std::ostream &operator<<(std::ostream &output, const Vec3f &v);
 
 

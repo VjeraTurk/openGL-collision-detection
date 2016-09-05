@@ -42,6 +42,14 @@ Vec3f Vec3f::operator-() const {
 	return Vec3f(-v[0], -v[1], -v[2]);
 }
 
+//tok zna dal radi :(
+bool Vec3f::operator==( Vec3f &other)  {
+    
+    if((v[0] == other.v[0]) && (v[1] == other.v[1])&&( v[2] == other.v[2]))return 1;
+    
+    return 0;
+}
+
 const Vec3f &Vec3f::operator*=(float scale) {
 	v[0] *= scale;
 	v[1] *= scale;
@@ -110,6 +118,14 @@ Vec3f crossProduct( const Vec3f &v1,  const Vec3f &v2 )
     vCrossProduct[2] = v1[0] * v2[1] - v1[1] * v2[0];
 
     return vCrossProduct;
+}
+
+//tko zna dal radi :(
+bool isNull(Vec3f v){
+  
+    if(v[0] == 0 && v[1]==0 && v[2]==0) return 1;
+
+  return 0;
 }
 
  float dotProduct( const Vec3f &v1,  const Vec3f &v2 )
