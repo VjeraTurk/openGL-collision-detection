@@ -16,14 +16,11 @@
 
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
+const float GRAVITY =  0.0f;
+
+int selection=1;
 
 using namespace std;
-
-
-
-int flag=1; //colide = 0 don't colide =-1;
-int w_flag=1; //colide = 0 don't colide =-1;
-
 struct Ball{
   Vec3f pos; // position
   Vec3f v; //velocity with direction
@@ -55,7 +52,9 @@ struct Wall{
 
 //Wall front, back, left, right,top, bottom;
   
-struct BallWallPair {
+class BallWallPair {
+  
+public:
 	Ball* ball;
 	Wall* wall;
 };
@@ -148,8 +147,25 @@ Node *pChild[8];
 Ball *pObjList; // Linked list of objects contained at this node
 };
 
-Node root;
+
 void drawOctree(Node *pTree);
+Node *BuildOctree(Point center, float halfWidth, int stopDepth);
+void InsertObject(Node *pTree, Ball *pObject);
+void TestAllCollisions(Node *pTree);
+
+void drawBall(Ball ball);
+void move_ball(Ball *ball, float dt);
+
+int check_collision(BallPair pair);
+int check_wall_collision(BallWallPair pair);
+void responce(BallPair pair);
+void w_responce(BallWallPair pair);
+
+Ball *create_list(int max);
+
+
+Node root;
+
 Node *BuildOctree(Point center, float halfWidth, int stopDepth)
 {
     if (stopDepth < 0)return NULL;
@@ -171,7 +187,7 @@ Node *BuildOctree(Point center, float halfWidth, int stopDepth)
 	    offset.y= ((i & 2) ? step : -step);
 	    offset.z= ((i & 4) ? step : -step);
 	    
-	    cout<<"offset: "<<offset.x<<" "<<offset.y<<" "<<offset.z<<endl;
+	    //cout<<"offset: "<<offset.x<<" "<<offset.y<<" "<<offset.z<<endl;
 	    pNode->pChild[i] = BuildOctree(center+offset, step, stopDepth - 1);
 	  }
 
@@ -190,24 +206,30 @@ void InsertObject(Node *pTree, Ball *pObject)
     for (int i=0; i< 3; i++){
    
     float delta = pObject->pos[i] - pTree->center.x;
-    cout<<pTree->halfWidth<<endl;
-     
-      if(abs(delta) < pTree->halfWidth + pObject->r){
+    
+     cout<<"delta"<<abs(delta)<<endl;
+    cout<<pTree->halfWidth + pObject->r<<endl;
+	
+      if(abs(delta) < pTree->halfWidth + pObject->r)  {
 	//cout<<"i:"<<i<<endl;
 	 //cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;
+	
 	straddle = 1;
-	cout<<i;
+	cout<<"i "<<i<<endl;
+	//cout<<i;
 	break;
       }
       
       if(delta > 0.0f) index |= (1<<i);
+
+     /* 
       //ZYX ubaci 1 na Z X ili Y mjesto u indexu (little-endian format)
       //index nije polje, vec int- a ovime mijenjamo njegovu binarnu vrijednos
     }
-    cout<<":"<<straddle<<endl;
+   // cout<<":"<<straddle<<endl;
     
     if(!straddle){
-        
+       // cout<<index;
     //cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;
     //cout<<"str:"<<straddle<<endl;
     //cout<<"indx:"<<index<<endl;
@@ -215,12 +237,12 @@ void InsertObject(Node *pTree, Ball *pObject)
       
       if(pTree->pChild[index] == NULL){
 	//cout<<"case 2 ";
-	  //pTree = new Node;
+	  pTree = new Node;
 	  pTree = BuildOctree(pTree->center,pTree->halfWidth,1);
 	 //pTree->pChild[index]->pChild[0]=NULL;
-	InsertObject(pTree->pChild[index], pObject);
-	  cout<<"center:"<<pTree->center.x<<" "<<pTree->center.y<<" "<<pTree->center.z;
-	 cout<<"center:"<<pTree->pChild[0]->center.x<<" "<<pTree->pChild[0]->center.y<<" "<<pTree->pChild[0]->center.z;
+	  InsertObject(pTree->pChild[index], pObject);
+	  //cout<<"center:"<<pTree->center.x<<" "<<pTree->center.y<<" "<<pTree->center.z;
+	 //cout<<"center:"<<pTree->pChild[0]->center.x<<" "<<pTree->pChild[0]->center.y<<" "<<pTree->pChild[0]->center.z;
       
 	
       }else{
@@ -235,14 +257,17 @@ void InsertObject(Node *pTree, Ball *pObject)
       //postavi ga kao prvog u listi!!!
       pObject->next = pTree->pObjList;
       pTree->pObjList = pObject;
+   */ 
+      
     }
     /*
     cout<<"pos:"<<pObject->pos[0]<<" "<<pObject->pos[1]<<" "<<pObject->pos[2]<<endl;; 
-    cout<<"str:"<<straddle<<endl;
+    cout<<"str:"<<straddle<<endl;*/
     cout<<"indx:"<<index<<endl;
-    cout<<"hw:"<<pTree->halfWidth<<endl;*/
+    cout<<"hw:"<<pTree->halfWidth<<endl;
   
 }
+
 
 // Tests all objects that could possibly overlap due to cell ancestry and coexistence
 // in the same cell. Assumes objects exist in a single cell only, and fully inside it
@@ -277,8 +302,6 @@ void TestAllCollisions(Node *pTree)
   depth--;
 }
 
-
-
 void drawOctree(Node *pTree){
   
   //cout<<"dO:"<<pTree->halfWidth<<endl;
@@ -298,7 +321,9 @@ void drawOctree(Node *pTree){
     glPushMatrix();
     glDisable(GL_LIGHTING);
     glColor3f(0,1,0);
-    glTranslatef(pTree->center.x-pTree->halfWidth,pTree->center.y-pTree->halfWidth,pTree->center.z-pTree->halfWidth);
+  //  glTranslatef(pTree->center.x-pTree->halfWidth,pTree->center.y-pTree->halfWidth,pTree->center.z-pTree->halfWidth);
+    glTranslatef(pTree->center.x,pTree->center.y,pTree->center.z);
+    //glutWireCone(1,2,20,1);
     glutWireCube(pTree->halfWidth);
     //glutWireCube(1);
     glEnable(GL_LIGHTING);
@@ -309,7 +334,6 @@ void drawOctree(Node *pTree){
   
 
 }
-
 
 void drawBall(Ball ball)
 {
@@ -325,20 +349,22 @@ void drawBall(Ball ball)
 }
 const float TIME_BETWEEN_UPDATES = 0.001f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
-const float t =0.005;
+const float t =0.01;
 
 void move_ball(Ball *ball, float dt){
   
     glPushMatrix();
-    
     ball->pos+=ball->v * dt;
-    cout <<"moved"<<endl;
+    //cout <<"moved"<<endl;
     glPopMatrix();
   
 }
 
+void pullBall(Ball *ball){
+  ball->v-= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
+}
 
-void check_collision(BallPair pair){
+int check_collision(BallPair pair){
    
    Ball *bA= pair.bA;
    Ball *bB= pair.bB;
@@ -347,12 +373,11 @@ void check_collision(BallPair pair){
    //cout<<r<<endl;
  
    if ((bA->pos - bB->pos).magnitudeSquared() < r*r){ 
-    flag=0;
+    return 1;
      
-  }else flag=1;
+  }else return 0;
 
 }
-
 
 void responce(BallPair pair){
    Ball *bA = pair.bA;
@@ -361,11 +386,9 @@ void responce(BallPair pair){
    Vec3f displacement = (bA->pos - bB->pos).normalize();
   bA->v -= 2 * displacement * bA->v.dot(displacement);
   bB->v -= 2 * displacement * bB->v.dot(displacement);
-  flag=1;
 }
 
 int check_wall_collision(BallWallPair pair){
-  
   
   Ball *b = pair.ball;
   Wall *w = pair.wall;
@@ -384,36 +407,119 @@ void w_responce(BallWallPair pair){
   
   Vec3f dir = w->direction.normalize();
   b->v -= 2 * dir * b->v.dot(dir);
-  
-  w_flag = 1;
 }
 
-void update(int value) {
-    //cout<<flag<<endl;
-     if(flag && w_flag)
-        { /*
-           move_ball(&ball1,t);
-	   InsertObject(&root,&ball1);
-	   move_ball(&ball2,t);
-	   InsertObject(&root, &ball2);
-	   check_collision(bp);
-	   */
-	    InsertObject(&root, &testBall);
-
-	   //if( check_wall_collision(bw))w_responce(bw);
-	   //if(check_wall_collision(bw2))w_responce(bw2);	 
-	   
-	}
+float randomFloat() {
+	return (float)rand() / ((float)RAND_MAX + 1);
+}
+Ball *create_list(int max){   
+    Ball* head;
+    Ball* temp=NULL;
+    Ball* ball;
+    
+  for(int i = 0; i < max; i++) {
+        ball = new Ball();
    
-   if(!flag)
-    {
-	  responce(bp);  
+      ball->pos = Vec3f(8 * randomFloat() - 4, 8 * randomFloat() - 4, 8 * randomFloat() -4);
+      //ball->pos = Vec3f(0,0, 8 * randomFloat() -4);
+      ball->v = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 8 * randomFloat() - 4);
+      ball->r = 0.1f * randomFloat() + 0.1f;
+      ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
+  
+      ball->next=NULL;
+      
+      if(!temp)head=ball;
+      
+      else  temp->next = ball;
+      temp = ball;
+     cout<<ball->pos[3]<<endl;
+  }
+  return head;
+}
+
+Ball* AllBalls;
+
+
+void applyGravity(Ball *head) {
+  Ball *temp;
+  for(temp=head; temp!=NULL; temp= temp->next){
+    pullBall(temp);
+  }
+
+}
+void moveBalls(Ball *head){
+    Ball *temp=NULL;
+ temp=head;
+ for(temp=head; temp!=NULL; temp= temp->next){ 
+   move_ball(temp,t);
+ }
+}
+
+void drawBalls(Ball *head){
+  
+  Ball *temp;
+  
+ for(temp=head; temp!=NULL; temp = temp->next){
+    drawBall(*temp);
+  }
+
+}
+
+
+
+
+
+void update(int value) {
+ 
+    switch(selection){
+      
+      case 1:
+	
+           move_ball(&ball1,t);
+	   move_ball(&ball2,t);
+	   pullBall(&ball1);
+	   pullBall(&ball2);
+	   
+	   if(check_collision(bp)) responce(bp);
+	   if(check_wall_collision(bw))w_responce(bw);
+           if(check_wall_collision(bw2))w_responce(bw2);
+	  
+	break;
+ 
+      case 2:
+	  moveBalls(AllBalls);
+	  applyGravity(AllBalls);
+	 break;
+      case 3:
+	
+	break;
+	
     }
     
-    
-	glutPostRedisplay();
+    glutPostRedisplay();
+    glutTimerFunc(TIMER_MS, update, 0);
+}
 
-	glutTimerFunc(TIMER_MS, update, 0);
+
+void elastic_collision(){
+  
+    drawBall(ball1); 
+    drawBall(ball2); 
+    
+  
+}
+void multiple_balls_collision(){
+  
+     drawBalls(AllBalls);
+    
+  
+}
+void balls_in_octree(){
+  
+    drawBall(testBall);
+    drawOctree(&root);
+    
+  
 }
 void display()
 {
@@ -437,34 +543,37 @@ void display()
 
  //   InsertObject(&root,&ball1);
 //    InsertObject(&root,&ball2);
+       
+
+        switch(selection){
+      
+      case 1 : elastic_collision();
+		 break;
+      case 2 : multiple_balls_collision();
+		break;	
+      case 3 : balls_in_octree();
+    }
+
     
-    //drawBall(ball1);
-    //drawBall(ball2);
-    drawBall(testBall);
-     
-    drawOctree(&root);
-    drawCube(BOX_SIZE/2);
+    
+    
     glutSwapBuffers();
 }
  void init(){
      
    //ball 1
-    ball1.pos=Vec3f(3,3,3);
-    ball1.v=Vec3f(0,2,0);  
-    ball1.r=0.05f;
-    ball1.color= Vec3f(1,1,0);
+    ball1.pos=Vec3f(-2,0.4,0);
+    ball1.v=Vec3f(0,5,0);  
+    
+    ball1.r=0.4f;
+    ball1.color= Vec3f(1,0,0);
     
     //ball 2
-    ball2.pos=Vec3f(-2,-2,-2);
-    ball2.v=Vec3f(0,-2,0);  
-    ball2.r=0.7f;
-    ball2.color= Vec3f(1,0,0);
-    
-    //test ball
- 
-    testBall.pos=Vec3f(3,0,0);
-    testBall.r=0.5;
-    testBall.color=Vec3f(0,1,0);
+    ball2.pos=Vec3f(2,0.4,0);
+    ball2.v=Vec3f(0,-5,0);  
+   
+    ball2.r=0.4f;
+    ball2.color= Vec3f(1,1,0);
     
     bp.bA = &ball1;
     bp.bB = &ball2;
@@ -478,14 +587,23 @@ void display()
     bw2.ball = &ball1;
     bw2.wall = &top;
     
+    
+    AllBalls=create_list(40);
+    
+    
+   //test ball
+ 
+    testBall.pos=Vec3f(3,0,0);
+    testBall.r=0.5;
+    testBall.color=Vec3f(0,1,0);
     root.center=Point(0,0,0);//radi
     root.halfWidth=12;
     //root.center=Point(root.halfWidth,0,0);
     
-   // BuildOctree(root.center,root.halfWidth,1);   
+    BuildOctree(root.center,root.halfWidth,1);   
 
 }
-  
+
 void handleKeypress2(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
@@ -503,12 +621,19 @@ void handleKeypress2(unsigned char key, int x, int y) {
 		      break;
 		case 'y' : testBall.pos+=Vec3f(0,0,0.1);
 		      break;
-		case 'r' : testBall.pos=Vec3f(0,0,0);
+		case 'r' : testBall.pos=Vec3f(root.center.x,root.center.y,root.center.z);
 		      break;
-		      
+		case '1': selection=1;
+			break;
+		case '2': selection=2;
+		      break;
+		case '3': selection=3;
 	  
 	}
 }	
+
+		
+	
 int main(int argc,char **argv)
 {
     glutInit(&argc,argv);
