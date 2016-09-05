@@ -6,11 +6,9 @@
 #include <stdlib.h>
 //#include <vector>
 #include <math.h>
-//#include <AntTweakBar.h>
 #include "vector3f.h"
 #include "vec3f.h"
 
-#include "cube.h"
 #include "lighting.h"
 #include "navigation.h"
 #include "octree.h"
@@ -50,8 +48,6 @@ struct Wall{
       Vec3f direction;
       float t_red;
 };
-
-
 
 class BallWallPair {
   

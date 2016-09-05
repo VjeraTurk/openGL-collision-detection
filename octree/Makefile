@@ -2,20 +2,18 @@ CC = g++
 CFLAGS = -Wall
 PROG = octree
 
-SRCS = main.cpp  vec3f.cpp cube.cpp
+SRCS = main.cpp  vec3f.cpp 
 
 ifeq ($(shell uname),Darwin)
-	LIBS = -framework OpenGL -framework GLUT -l/home/Documents/AntTweakBar/lib
+	LIBS = -framework OpenGL -framework GLUT
 else
-	LIBS = -lglut	-lGL	-lGLU	-lAntTweakBar
+	LIBS = -lglut	-lGL	-lGLU
 endif
-
-INC = -I/home/Documents/AntTweakBar/include
 
 all: $(PROG)
 
 $(PROG):	$(SRCS)
-	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS) $(INC)
+	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
 
 clean:
 	rm -f $(PROG)
