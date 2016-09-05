@@ -14,21 +14,28 @@
 #include "lighting.h"
 #include "navigation.h"
 
+#define RED 40
+
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
-const float GRAVITY =  0.0f;
+const float GRAVITY =  8.0f;
 
 int selection=1;
 
 using namespace std;
+
 struct Ball{
   Vec3f pos; // position
   Vec3f v; //velocity with direction
   
-  float r;
-  Vec3f color;
+  float m;
+  
+  float t_red;
   
   Ball* next;
+ 
+  float r;
+  Vec3f color;
 };
 
 struct BallPair{
@@ -46,12 +53,10 @@ struct BallPair{
 struct Wall{
   Vec3f direction;    
   float size;
-  //points
 };
-  Wall bottom, top;
 
-//Wall front, back, left, right,top, bottom;
-  
+Wall bottom, top;
+
 class BallWallPair {
   
 public:
@@ -135,6 +140,7 @@ Point operator+(Point p2){
 }
 
 };
+
 struct Node {
   Point center;
 // Center point of octree node (not strictly needed)
@@ -373,7 +379,20 @@ int check_collision(BallPair pair){
    //cout<<r<<endl;
  
    if ((bA->pos - bB->pos).magnitudeSquared() < r*r){ 
-    return 1;
+     
+     Vec3f netVelocity = bA->v - bB->v;
+     Vec3f displacement = bA->pos - bB->pos;
+
+    //Udaljavaju li se loptice?
+    
+     if(netVelocity.dot(displacement)<0){
+      bA->t_red = RED;
+      bB->t_red = RED;
+      return 1;
+    }  
+    
+    return 0;      
+  
      
   }else return 0;
 
@@ -438,7 +457,7 @@ Ball *create_list(int max){
 }
 
 Ball* AllBalls;
-
+BallPair* AllBallPairs;
 
 void applyGravity(Ball *head) {
   Ball *temp;
@@ -465,9 +484,32 @@ void drawBalls(Ball *head){
 
 }
 
+void bruteForce(Ball *head){
+  
+    Ball *temp1=NULL;
+    Ball *temp2=NULL;
+    
+    BallPair bp;
+    bp.bA = temp1;
+    bp.bB = temp2;
+    
+ for(temp1=head; temp1!=NULL; temp1 = temp1->next){
 
+    for(temp2=temp1->next; temp2!=NULL; temp2 = temp2->next){
+     
+      bp.bA = temp1;
+      bp.bB = temp2;
 
-
+      if(check_collision(bp))responce(bp);
+      
+    }   
+   
+ }
+  
+  
+  
+  
+}
 
 void update(int value) {
  
@@ -489,6 +531,7 @@ void update(int value) {
       case 2:
 	  moveBalls(AllBalls);
 	  applyGravity(AllBalls);
+	  bruteForce(AllBalls);
 	 break;
       case 3:
 	
@@ -530,7 +573,7 @@ void display()
     glLoadIdentity();
    // glTranslatef(0.0, 0.0, -(dis+ddis));
 
-    glTranslatef(0.0, 0.0, -60.0f);
+    glTranslatef(0.0, 0.0, -30.0f);
 
     glRotated(elev+delev, 1.0, 0.0, 0.0);
     glRotated(azim+dazim, 0.0, 1.0, 0.0);
@@ -563,14 +606,14 @@ void display()
      
    //ball 1
     ball1.pos=Vec3f(-2,0.4,0);
-    ball1.v=Vec3f(0,5,0);  
+    ball1.v=Vec3f(4,0,0);  
     
     ball1.r=0.4f;
     ball1.color= Vec3f(1,0,0);
     
     //ball 2
     ball2.pos=Vec3f(2,0.4,0);
-    ball2.v=Vec3f(0,-5,0);  
+    ball2.v=Vec3f(-4,0,0);  
    
     ball2.r=0.4f;
     ball2.color= Vec3f(1,1,0);
@@ -588,7 +631,7 @@ void display()
     bw2.wall = &top;
     
     
-    AllBalls=create_list(40);
+    AllBalls=create_list(100);
     
     
    //test ball
@@ -640,7 +683,7 @@ int main(int argc,char **argv)
 
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB|GLUT_DEPTH);
 
-    glutInitWindowSize(600, 600);
+    glutInitWindowSize(700, 600);
 
     glutCreateWindow("Collision Window");
 
