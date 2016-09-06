@@ -4,7 +4,6 @@
 #include <ctime>
 #include <iostream>
 #include <stdlib.h>
-//#include <vector>
 #include <math.h>
 #include "vector3f.h"
 #include "vec3f.h"
@@ -12,14 +11,15 @@
 #include "lighting.h"
 #include "navigation.h"
 #include "octree.h"
-
+#include "structures.h"
 #define RED 40
 
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
-const float GRAVITY =  20.0f;
+const float GRAVITY =  10.0f;
 
 int selection=1;
+int box=1;
 /*
  struct Ball{
   Vec3f pos; // position
@@ -49,11 +49,14 @@ struct Wall{
       float t_red;
 };
 
-class BallWallPair {
-  
-public:
+struct BallWallPair {
 	Ball* ball;
 	Wall* wall;
+};
+
+struct exPos{
+  Vec3f pos;
+  Vec3f *next;
 };
 //all selections 
 const float ALPHA = 0.6f;
@@ -66,6 +69,9 @@ const float ALPHA = 0.6f;
  BallWallPair bw, bw2;
  Wall bottom, top;
 
+ exPos *ex1;
+ exPos *ex2;
+ 
 //selection 2 
  Ball* AllBalls;
  BallPair* AllBallPairs;
@@ -88,8 +94,8 @@ void elastic_collision();
   
     void move_ball(Ball *ball, float dt);
     void pullBall(Ball *ball);
-    int check_collision(BallPair pair);
-    int check_wall_collision(BallWallPair pair);
+    bool check_collision(BallPair pair);
+    bool check_wall_collision(BallWallPair pair);
     void responce(BallPair pair);
     void w_responce(BallWallPair pair);
 
@@ -193,17 +199,16 @@ float randomFloat() {
 
 void drawBall(Ball ball)
 {
-    glColor3f(ball.color[0],ball.color[1], ball.color[2]);
-
-    glPushMatrix();
+     glPushMatrix();
     
+    glColor3f(ball.color[0],ball.color[1], ball.color[2]);
     glTranslatef(ball.pos[0],ball.pos[1],ball.pos[2]);
     glutSolidSphere(ball.r,20,20);
   
     glPopMatrix();
     
 }
-const float TIME_BETWEEN_UPDATES = 0.001f;
+const float TIME_BETWEEN_UPDATES = 0.01f;
 const int TIMER_MS = 25; //The number of milliseconds to which the timer is set
 const float t =0.01f;
 
@@ -213,7 +218,8 @@ void move_ball(Ball *ball, float dt){
     
     ball->pos+=ball->v * dt;
    
-    //cout <<"y "<<ball->v[1]<<endl;
+    //cout <<"v.y "<<ball->v[1]<<endl;
+    //cout <<"pos.y "<<ball->pos[1]<<endl;
     
     glPopMatrix();
   
@@ -223,7 +229,7 @@ void pullBall(Ball *ball){
   ball->v-= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
 }
 
-int check_collision(BallPair pair){
+bool check_collision(BallPair pair){
    
    Ball *bA= pair.bA;
    Ball *bB= pair.bB;
@@ -233,23 +239,16 @@ int check_collision(BallPair pair){
    //cout<<r<<endl;
   
    
-   if ((bA->pos - bB->pos).magnitudeSquared() < r*r){ 
-     
-   if(isNull(bA->v)|| isNull(bB->v)){
-      cout<<"stojim"<<endl;
-       return 0;
-   }   
+   if ((bA->pos - bB->pos).magnitudeSquared() < r*r){  
      
      Vec3f netVelocity = bA->v - bB->v;
      Vec3f displacement = bA->pos - bB->pos;
 
     //Udaljavaju li se loptice?
     
-     if(netVelocity.dot(displacement)<0){
+    if(netVelocity.dot(displacement)<0){
       bA->t_red = RED;
       bB->t_red = RED;
-      
-     
       return 1;
     }  
     
@@ -259,7 +258,7 @@ int check_collision(BallPair pair){
   }else return 0;
 
 }
-
+/*
 void responce(BallPair pair){
   
   Ball *bA = pair.bA;
@@ -270,11 +269,11 @@ void responce(BallPair pair){
    
    float v_1=bA->v[0];
    float v_2=bB->v[0];   
-   /*
-   	v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+   
+   	//v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
    	
-   	v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
-   */
+   	//v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   
  
    bA->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
    bB->v[0]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
@@ -294,40 +293,57 @@ void responce(BallPair pair){
    bA->v[2]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
    bB->v[2]= ((m_2 - m_1) * v_2 + 2 * m_1 * v_1)/ (m_1 + m_2) ;
    
-   
-   
- /*
-   Vec3f displacement = (bA->pos - bB->pos).normalize();
-   bA->v -= 2 * displacement * bA->v.dot(displacement);
-   bB->v -= 2 * displacement * bB->v.dot(displacement);
-  */
+
+//   Vec3f displacement = (bA->pos - bB->pos).normalize();
+//  bA->v -= 2 * displacement * bA->v.dot(displacement);
+//   bB->v -= 2 * displacement * bB->v.dot(displacement);
+}*/
+
+void responce(BallPair pair){
   
+   Ball *bA = pair.bA;
+   Ball *bB = pair.bB;
+  
+   float m_1= bA->m;
+   float m_2= bB->m;
    
+   Vec3f v_1=bA->v;
+   Vec3f v_2=bB->v;   
    
+   //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+   //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   
+ 
+   bA->v= (v_1*(m_1 - m_2) + v_2*(2 * m_2)) / (m_1 + m_2) ;
+   bB->v = (v_2*(m_2 - m_1) + v_1*(2 * m_1 ))/ (m_1 + m_2) ; 
 }
 
-int check_wall_collision(BallWallPair pair){
+bool check_wall_collision(BallWallPair pair){
   
   Ball *b = pair.ball;
   Wall *w = pair.wall;
   
   Vec3f dir = w->direction;
   
-  if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
-   w->t_red=RED;
+  //if(b->pos[0]+b->r > BOX_SIZE/2 || b->pos[0]-b->r< -BOX_SIZE/2)
+   if( b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0){
+   //cout<<b->pos.dot(dir)<<endl;
+   //cout<<b->v.dot(dir)<<endl;
+   w->t_red=RED; 
    return 1;
   }
    return 0;
+   
 }
 
-/*
-void w_responce(BallWallPair pair){
+
+void real_responce(BallWallPair pair){
   
   
    Ball *b = pair.ball;
   
    float m_1= b->m;
-   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0
+   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0, polako tonu u pod
    
    float v_1;
    float v_2=0;
@@ -346,34 +362,24 @@ void w_responce(BallWallPair pair){
   
    
 }
-*/
-
-/* 
- void w_responce(BallWallPair pair){
+/*
+void real_responce(BallWallPair pair){
   
-   //prolaze kroz zidove
-   
    Ball *b = pair.ball;
-   Wall *w = pair.wall;
-   
-   Vec3f d=w->direction;
-   
+  
    float m_1= b->m;
-   float m_2= 1;
+   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0
    
    Vec3f v_1=b->v;
-   Vec3f v_2=d;
+   Vec3f v_2=Vec3f(0,0,0);
+  //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+  //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
    
-   b->v= v_1*(m_1 - m_2) + (v_2*m_2)*2 / (m_1 + m_2) ;
-
-
-   	//v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
-   	
-   	//v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+    b->v= (v_1*(m_1 - m_2) + v_2*(2 * m_2)) / (m_1 + m_2) ;
    
-}*/
-
-void w_responce(BallWallPair pair){
+}
+*/
+void ideal_responce(BallWallPair pair){
   
    Ball *b = pair.ball;
    Wall *w = pair.wall;
@@ -414,7 +420,7 @@ Ball *create_list(int max){
 
 void applyGravity(Ball *head) {
   Ball *temp;
-  for(temp=head; temp!=NULL; temp= temp->next){
+  for(temp=head; temp!=NULL; temp=temp->next){
     pullBall(temp);
   }
 
@@ -430,10 +436,10 @@ void moveBalls(Ball *head){
 void drawBalls(Ball *head){
   
   Ball *temp;
-  
  for(temp=head; temp!=NULL; temp = temp->next){
     glPushMatrix();
-	
+   // cout<<temp->m<<endl;
+ 	
       glTranslatef(temp->pos[0], temp->pos[1], temp->pos[2]);
 		
 		if(temp->t_red){
@@ -442,7 +448,7 @@ void drawBalls(Ball *head){
 		  temp->t_red--;
 		  
 		}else{
-		  
+		//glColor3f(temp->color[0],temp->color[1],temp->color[2]);  
 		glColor3f(1, 1, 1);
 		  
 		}	//glColor3f(temp->color[0], temp->color[1], temp->color[2]);
@@ -490,37 +496,39 @@ void ballsWallsCollisions(Ball *head){
 			bwp.ball = temp;
 			bwp.wall = walls[j];
 			
-			if(check_wall_collision(bwp))w_responce(bwp);
-		}
+			if(check_wall_collision(bwp) && box)real_responce(bwp);
+			if(check_wall_collision(bwp) && !box)ideal_responce(bwp);
+		
+	      
+	    }
 	}
 
 }
-	
 
 void update(int value) {
  
     switch(selection){
       
       case 1:
-	
+	   
            move_ball(&ball1,t);
 	   move_ball(&ball2,t);
-	   pullBall(&ball1);
-	   pullBall(&ball2);
+	  // pullBall(&ball1);
+	  // pullBall(&ball2);
+	   
+	   
+	   if(check_wall_collision(bw) || box)ideal_responce(bw);
+           if(check_wall_collision(bw2)|| box)ideal_responce(bw2);
 	   
 	   if(check_collision(bp)) responce(bp);
 	   
-	   if(check_wall_collision(bw))w_responce(bw);
-           if(check_wall_collision(bw2))w_responce(bw2);
-	  
 	break;
  
       case 2:
-	  moveBalls(AllBalls);
 	  applyGravity(AllBalls);
-	  bruteForce(AllBalls);
+	  moveBalls(AllBalls);
 	  ballsWallsCollisions(AllBalls);
-	 
+	  bruteForce(AllBalls);
 	  break;
       case 3:
 	
@@ -547,6 +555,7 @@ void elastic_collision(){
       glEnd();
       
    glPopMatrix(); 
+   
       drawBall(ball1); 
       drawBall(ball2); 
       
@@ -574,7 +583,7 @@ void display()
     glLoadIdentity();
    // glTranslatef(0.0, 0.0, -(dis+ddis));
 
-    glTranslatef(0.0, 0.0, -20.0f);
+    glTranslatef(0.0, 0.0, -25.0f);
 
     glRotated(elev+delev, 1.0, 0.0, 0.0);
     glRotated(azim+dazim, 0.0, 1.0, 0.0);
@@ -595,10 +604,12 @@ void display()
 	    elastic_collision();
 		 break;
       case 2 : 
-	      drawCube(BOX_SIZE);  
+	      if(box)drawCube(BOX_SIZE);
+	      else glutWireCube(BOX_SIZE);
 	      multiple_balls_collision();
 		break;	
-      case 3 : balls_in_octree();
+      case 3 : //balls_in_octree();
+		break;
     }
 
     
@@ -606,22 +617,46 @@ void display()
     
     glutSwapBuffers();
 }
-
- void init(){
-     
+void init_central(){
    //ball 1
     ball1.m=0.4f;
-    ball1.r=0.5f; 
+    ball1.r=0.4f; 
    
     ball1.pos=Vec3f(-2,-BOX_SIZE/2+ball1.r,0);
-    ball1.v=Vec3f(2,0,2);  
+    ball1.v=Vec3f(4,0,0);  
     
     ball1.color= Vec3f(1,0,0);
     
     
     //ball 2
-    ball2.r=1.0f;
-    ball2.m=2.0f;
+    ball2.r=0.8f;
+    ball2.m=1.0f;
+    
+    ball2.pos=Vec3f(2,-BOX_SIZE/2+ball2.r,0);
+    ball2.v=Vec3f(-10,0,0);  
+    
+    ball2.color= Vec3f(0,0,1);
+    
+    bp.bA = &ball1;
+    bp.bB = &ball2;
+  
+  
+}
+ void init(){
+     
+   //ball 1
+    ball1.m=0.4f;
+    ball1.r=0.4f; 
+   
+    ball1.pos=Vec3f(-3,-BOX_SIZE/2+ball1.r,-2);
+    ball1.v=Vec3f(4,0,4.5);  
+    
+    ball1.color= Vec3f(1,0,0);
+    
+    
+    //ball 2
+    ball2.r=0.8f;
+    ball2.m=1.0f;
     
     ball2.pos=Vec3f(2,-BOX_SIZE/2+ball2.r,-1);
     ball2.v=Vec3f(-10,0,4);  
@@ -641,7 +676,7 @@ void display()
     bw2.wall = &bottom;
     
     
-    AllBalls=create_list(100);
+    AllBalls=create_list(50);
     
     //walls
       l.direction = Vec3f(-1, 0, 0);
@@ -692,7 +727,11 @@ void handleKeypress2(unsigned char key, int x, int y) {
 		case '0':
 			init();
 		  break;
-	  
+		case 'b': if(box==1)box=0;
+			  else box=1; 
+		case 'c': init_central();
+		  
+		  break;
 	}
 }	
 	
