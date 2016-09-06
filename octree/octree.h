@@ -6,42 +6,11 @@
 #include <stdlib.h>
 #include <vector>
 #include <math.h>
-
+#include "structures.h"
 #define BOX_SIZE 12
 #define MAX_OCTREE_DEPTH 6
 
 using namespace std;
-class Point{
-
-
-public:
-
-  float x,y,z;
-
-  Point(){
-    
-  }
-  
-  Point(float _x, float _y, float _z) {
-	x = _x;
-	y = _y;
-	z = _z;
-  } 
-///ne znamm :( WHY??
-
-Point operator+(Point p2){
-  float x_,y_,z_;
-   
-   x_ = x + p2.x;
-   y_= y + p2.y;
-   z_ = z + p2.z;
-   
-   Point result=Point(x_,y_,z_);
-   
-   return result;
-}
-
-};
 
 // hash table 0000 0001 0010 0011 ... lista? Kako
 /*
@@ -89,19 +58,7 @@ Point operator+(Point p2){
  */
 
 
-struct Ball{
-  Vec3f pos; // position
-  Vec3f v; //velocity with direction
-  
-  float m;
-  
-  float t_red;
-  
-  Ball* next;
- 
-  float r;
-  Vec3f color;
-};
+
 struct Node {
   Point center;
 // Center point of octree node (not strictly needed)
