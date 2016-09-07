@@ -74,7 +74,7 @@ void multiple_balls_collision();
     void drawBalls(Ball *head);
 
     void applyGravity(Ball *head);
-    void moveBalls(Ball *head);
+    void moveBalls(Ball *head, float t);
     
     void bruteForce(Ball *head);
     void ballsWallsCollisions(Ball *head);
@@ -500,6 +500,17 @@ void drawBall(Ball ball)
     glPopMatrix();
     
 }
+void drawBigBall(Ball ball)
+{
+     glPushMatrix();
+    
+    glColor3f(ball.color[0],ball.color[1], ball.color[2]);
+    glTranslatef(ball.pos[0],ball.pos[1],ball.pos[2]);
+    glutSolidSphere(ball.r,50,50);
+  
+    glPopMatrix();
+    
+}
 
 void move_ball(Ball *ball, float dt){
   
@@ -507,15 +518,17 @@ void move_ball(Ball *ball, float dt){
     
     ball->pos+=ball->v * dt;
    
-    //cout <<"v.y "<<ball->v[1]<<endl;
+   // cout <<"v.x "<<ball->v[0]<<endl;
     //cout <<"pos.y "<<ball->pos[1]<<endl;
+    
+
     
     glPopMatrix();
   
 }
 
 void pullBall(Ball *ball){
-  ball->v-= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
+  if(ball->pos[1]-ball->r >= -BOX_SIZE/2)  ball->v-= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
 }
 
 bool check_collision(BallPair pair){
@@ -602,9 +615,26 @@ void responce(BallPair pair){
    //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
    //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
    
- 
    bA->v= (v_1*(m_1 - m_2) + v_2*(2 * m_2)) / (m_1 + m_2) ;
    bB->v = (v_2*(m_2 - m_1) + v_1*(2 * m_1 ))/ (m_1 + m_2) ; 
+
+  
+  //Impuls sile	teže I_2=m_2*v_2'-m_2v_2
+  
+   Vec3f I;
+  /* 
+   I = bB->v*m_2+v_2*m_2;
+   cout<<I[0]<<endl;
+   
+   I = v_1*2*m_1;
+   cout<<I[0]<<endl;
+   
+   */
+   //(v_1 + v_1'−v_2 − v_2' ) = 0
+   
+   I = v_1 + bA->v - v_2 - bB->v;
+  // cout<<I[0]<<endl;
+
 }
 
 bool check_wall_collision(BallWallPair pair){
@@ -619,12 +649,12 @@ bool check_wall_collision(BallWallPair pair){
    //cout<<b->pos.dot(dir)<<endl;
    //cout<<b->v.dot(dir)<<endl;
    w->t_red=RED; 
-   return 1;
+   return b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0;
   }
    return 0;
    
 }
-
+/*
 void real_responce(BallWallPair pair){
   
    Ball *b = pair.ball;
@@ -649,8 +679,33 @@ void real_responce(BallWallPair pair){
   
    
 }
-/*
+*/
 void real_responce(BallWallPair pair){
+  
+  
+   Ball *b = pair.ball;
+  
+   float m_1= b->m;
+   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0
+   
+   float v_1;
+   float v_2=0;
+
+  //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
+  //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
+   
+   v_1=b->v[0];
+   b->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+
+   v_1 = b->v[1];
+   b->v[1]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+
+   v_1 = b->v[2];
+   b->v[2]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
+  
+   
+}
+void real_responce2(BallWallPair pair){
   
    Ball *b = pair.ball;
   
@@ -662,10 +717,12 @@ void real_responce(BallWallPair pair){
   //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
   //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
    
+    //b->v= (v_1*(m_1 - m_2) + v_2*(2 * m_2)) / (m_1 + m_2) ;
+   
     b->v= (v_1*(m_1 - m_2) + v_2*(2 * m_2)) / (m_1 + m_2) ;
    
 }
-*/
+
 void ideal_responce(BallWallPair pair){
   
    Ball *b = pair.ball;
@@ -710,7 +767,7 @@ void applyGravity(Ball *head) {
   }
 
 }
-void moveBalls(Ball *head){
+void moveBalls(Ball *head, float t){
     Ball *temp=NULL;
  temp=head;
  for(temp=head; temp!=NULL; temp= temp->next){ 
@@ -805,9 +862,9 @@ void elastic_collision(){
       glEnd();
       
    glPopMatrix(); 
-   
-      drawBall(ball1); 
-      drawBall(ball2); 
+  
+      drawBigBall(ball1); 
+      drawBigBall(ball2); 
       
   
 }
@@ -815,47 +872,93 @@ void elastic_collision(){
 void multiple_balls_collision(){ 
      drawBalls(AllBalls); 
 }
-
+int central=0;
 void init_central(){
-   //ball 1
-    ball1.m=0.4f;
-    ball1.r=0.4f; 
-   
-    ball1.pos=Vec3f(-2,-BOX_SIZE/2+ball1.r,0);
-    ball1.v=Vec3f(4,0,0);  
+  
+  switch(central){
     
+    case 1:
+  /*
+  U slučaju kad je m1 = m2 kugle jednostavno zamijene brzine v 1' = v2 i v2 ' = v 1 . Ako
+  druga kugla miruje (v2 = 0) , tada je i v 1 ' = 0 , a v2 ' = v 1 ; nakon sudara prva kugla
+  stane dok druga odleti brzinom koju je prije sudara imala prva kugla.
+   */         //ball 1
+	    ball1.m=0.4f;
+	    ball1.r=0.4f; 
+      
+	      //ball 2
+	    ball2.r=0.4f;
+	    ball2.m=0.4f;
+	    
+	    ball1.v=Vec3f(4,0,0);  
+	    ball2.v=Vec3f(-10,0,0); 
+	    
+	    break;
+    case 2: 
+  /*
+  U slučaju kad je m1 << m2, ( v2 = 0) , tj. kad savršeno elastična kugla mase m1 i
+  brzine v1 udara u vrlo veliku kuglu ili savršeno elastični zid. Slijedi da je
+  v 1 ' = − v 1 , tj. kugla se odbija jednakom brzinom kojom je došla, a zid pri tom
+  dobije impuls sile 2 m 1v 1 . Zid ne dobije nikakvu energiju jer kugla prilikom sudara
+  ne mijenja energiju. Ukupna promjena količine gibanja kugle je 2 m 1v 1 .
+  */ 
+	    //ball 1
+	    ball1.m=0.4f;
+	    ball1.r=0.4f; 
+	    
+	    //ball 2
+	    ball2.m=100;
+	    ball2.r=3;
+	    
+	    ball1.v=Vec3f(4,0,0);  
+	    ball2.v=Vec3f(0,0,0); 
+	    
+	    break;
+    case 3 : 
+      
+ /*
+    U slučaju kad je m1 >> m2, (v2 = 0) , tj. kad vrlo velika kugla mase m_1 udari u kuglicu
+    koja miruje. Pri tom se brzina velike kugle vrlo malo promijeni dok lagana
+    kuglica odleti brzinom 2 puta većom od brzine upadne kugle.
+*/
+	  //ball 1
+	    ball1.m=300;
+	    ball1.r=3; 
+	   //ball 2
+	    ball2.m=0.4f;
+	    ball2.r=0.4f;
+	    
+	    ball1.v=Vec3f(4,0,0);  
+	    ball2.v=Vec3f(0,0,0); 
+	    
+	    break;
+  }
+    
+    ball1.pos=Vec3f(-4,-BOX_SIZE/2+ball1.r,0);
     ball1.color= Vec3f(1,0,0);
     
-    
-    //ball 2
-    ball2.r=0.8f;
-    ball2.m=1.0f;
-    
-    ball2.pos=Vec3f(2,-BOX_SIZE/2+ball2.r,0);
-    ball2.v=Vec3f(-10,0,0);  
-    
+    ball2.pos=Vec3f(4,-BOX_SIZE/2+ball2.r,0);
     ball2.color= Vec3f(0,0,1);
     
     bp.bA = &ball1;
-    bp.bB = &ball2;
-  
-  
+    bp.bB = &ball2; 
+    
 }
 void init(){
      
    //ball 1
-    ball1.m=0.4f;
-    ball1.r=0.4f; 
+    ball1.m=0.5f;
+    ball1.r=0.5f; 
    
-    ball1.pos=Vec3f(-3,-BOX_SIZE/2+ball1.r,-2);
+    ball1.pos=Vec3f(-3,-BOX_SIZE/2+ball1.r,-1);
     ball1.v=Vec3f(4,0,4.5);  
     
     ball1.color= Vec3f(1,0,0);
     
     
     //ball 2
-    ball2.r=0.8f;
-    ball2.m=1.0f;
+    ball2.r=0.7f;
+    ball2.m=0.7f;
     
     ball2.pos=Vec3f(2,-BOX_SIZE/2+ball2.r,-1);
     ball2.v=Vec3f(-10,0,4);  
@@ -875,34 +978,20 @@ void init(){
     bw2.wall = &bottom;
     
     
-    AllBalls=create_list(100);
+    AllBalls=create_list(500);
     
     //walls
-      l.direction = Vec3f(-1, 0, 0);
-      r.direction=Vec3f(1, 0, 0);
-      f.direction=Vec3f(0, 0, -1);
-      n.direction=Vec3f(0, 0, 1);
-      c.direction=Vec3f(0, 1, 0);
-      b.direction=Vec3f(0, -1, 0);
+    l.direction = Vec3f(-1, 0, 0);
+    r.direction=Vec3f(1, 0, 0);
+    f.direction=Vec3f(0, 0, -1);
+    n.direction=Vec3f(0, 0, 1);
+    c.direction=Vec3f(0, 1, 0);
+    b.direction=Vec3f(0, -1, 0);
 	
    //selection 3
-
     _octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
-
-     //selection X
-  /*    
-     //test ball
- 
-    testBall.pos=Vec3f(3,0,0);
-    testBall.r=0.5;
-    testBall.color=Vec3f(0,1,0);
-    root.center=Point(0,0,0);//radi
-    root.halfWidth=12;
-    //root.center=Point(root.halfWidth,0,0);
-    
-    //BuildOctree(root.center,root.halfWidth,1);   
- */
 }
+
 int pause = 1;
 int show_walls = 1;
 int ot = 1;
@@ -1172,20 +1261,6 @@ void handleKeypress2(unsigned char key, int x, int y) {
 		case 27: //Escape key
 			//TwTerminate();
 			exit(0);
-		case 'w': testBall.pos+=Vec3f(0,0.1f,0);
-		      break;
-		case 'a': testBall.pos+=Vec3f(-0.1f,0,0);
-		       break;
-		case 'd': testBall.pos+=Vec3f(0.1f,0,0);
-		      break;
-		case 's': testBall.pos+=Vec3f(0,-0.1,0);
-		      break;
-		case 'e' : testBall.pos+=Vec3f(0,0,-0.1);
-		      break;
-		case 'y' : testBall.pos+=Vec3f(0,0,0.1);
-		      break;
-		//case 'r' : testBall.pos=Vec3f(root.center.x,root.center.y,root.center.z);
-		 //     break;
 		case '1': selection=1;
 			break;
 		case '2': selection=2;
@@ -1201,8 +1276,10 @@ void handleKeypress2(unsigned char key, int x, int y) {
 			  if(show_walls == 1) show_walls = 0;
 			  else show_walls=1;
 			  
-		case 'c': init_central();
-		  
+		case 'c': central++;
+			  if(central>3)central=1;
+			  init_central();
+			 
 		  break;
 				case ' ':
 			//Add balls with a random position, velocity, radius, and color
@@ -1289,6 +1366,26 @@ void display()
     glutSwapBuffers();
 }
 
+
+void advanceAllBalls(float t, float &timeUntilUpdate) {
+	while (t > 0) {
+		if (timeUntilUpdate <= t) {
+			moveBalls(AllBalls, timeUntilUpdate);
+			applyGravity(AllBalls);
+			bruteForce(AllBalls);
+			ballsWallsCollisions(AllBalls);
+	 
+			t -= timeUntilUpdate;
+			timeUntilUpdate = TIME_BETWEEN_UPDATES;
+		}
+		else {
+			moveBalls(AllBalls, t);
+			timeUntilUpdate -= t;
+			t = 0;
+		}
+	}
+}
+
 void update(int value) {
  
     switch(selection){
@@ -1309,19 +1406,25 @@ void update(int value) {
 	break;
  
       case 2:
+
+	  advanceAllBalls((float)TIMER_MS / 1000.0f, _timeUntilUpdate);
+	//  moveBalls(AllBalls, t);
+	 // bruteForce(AllBalls);
+	 // ballsWallsCollisions(AllBalls);
+	  	  //applyGravity(AllBalls);
+	  
 	  _angle += (float)TIMER_MS / 100;
 	  if (_angle > 360) {
 		_angle -= 360;
 	  }
-	  applyGravity(AllBalls);
-	  moveBalls(AllBalls);
-	  ballsWallsCollisions(AllBalls);
-	  bruteForce(AllBalls);
+	
+	 
 	  break;
 	  
       case 3:
 	
 	advance(_balls, _octree, (float)TIMER_MS / 1000.0f, _timeUntilUpdate);
+	
 	_angle += (float)TIMER_MS / 100;
 	if (_angle > 360) {
 		_angle -= 360;
