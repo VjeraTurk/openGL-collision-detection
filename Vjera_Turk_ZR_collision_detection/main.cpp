@@ -630,16 +630,69 @@ void responce(BallPair pair){
   
 }
 
+void elastic_3D(BallPair pair){
+
+  
+  Ball *b1= pair.bA;
+  Ball *b2=  pair.bB;
+   
+  float m_1=b1->m;
+  float m_2=b2->m;
+  
+  float r12=b1->r+b2->r;
+  float m21=b2->m/b1->m;
+  
+  Vec3f v_1 = b1->v;
+   Vec3f v_2 = b2->v;   
+  
+   Vec3f v1x = Vec3f(v_1[0],0,0);
+   Vec3f v1y = Vec3f(0,v_1[1],0);
+   Vec3f v1z = Vec3f(0,0,v_1[2]);
+   
+   float v_1x=v_1[0];
+   float v_1y=v_1[1];
+   float v_1z=v_1[2];   
+
+   float v_2x=v_2[0];
+   float v_2y=v_2[1];
+   float v_2z=v_2[2];  
+   
+   float P = sqrt(v_1x*v_1x+v_1y*v_1y+v_1z*v_1z); //magnitude
+   
+  // cout<<P<<endl;
+   
+   float cosAlpha= v_1x/P;
+   float cosBeta= v_1y/P; 
+   float cosGamma= v_1z/P;
+
+   float Alpha = acos(cosAlpha);
+   float Beta = acos(cosBeta);
+   float Gamma = acos(cosGamma);
+
+   cout<<'a'<<Alpha<<endl;
+   cout<<'b'<<Beta<<endl;   
+   cout<<'c'<<Gamma<<endl;   
+   
+  /*
+   b1->v[0]= (v_1x*(m_1 - m_2) + v_2x*(2 * m_2)) / (m_1 + m_2);
+   b1->v[1]= (v_1y*(m_1 - m_2) + v_2y*(2 * m_2)) / (m_1 + m_2);
+   b1->v[2]= (v_1z*(m_1 - m_2) + v_2z*(2 * m_2)) / (m_1 + m_2);
+   
+   b2->v[0] = (v_2x*(m_2 - m_1) + v_1x*(2 * m_1 ))/ (m_1 + m_2); 
+   b2->v[1] = (v_2y*(m_2 - m_1) + v_1y*(2 * m_1 ))/ (m_1 + m_2); 
+   b2->v[2] = (v_2z*(m_2 - m_1) + v_1z*(2 * m_1 ))/ (m_1 + m_2); 
+  */
+}
  
-void collision3D(double R, double m1, double m2, double r1, double r2,
-                     double& x1, double& y1,double& z1,
-                     double& x2, double& y2, double& z2,
-                     double& vx1, double& vy1, double& vz1,
-                     double& vx2, double& vy2, double& vz2,
+void collision3D(float R, float m1, float m2, float r1, float r2,
+                     float& x1, float& y1,float& z1,
+                     float& x2, float& y2, float& z2,
+                     float& vx1, float& vy1, float& vz1,
+                     float& vx2, float& vy2, float& vz2,
                      int& error)     {
 
 
-       double  pi,r12,m21,d,v,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,fvz1r,
+       float  pi,r12,m21,d,v,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,fvz1r,
 	           thetav,phiv,dr,alpha,beta,sbeta,cbeta,dc,sqs,t,a,dvz2,
 			   vx2r,vy2r,vz2r,x21,y21,z21,vx21,vy21,vz21,vx_cm,vy_cm,vz_cm;
 
@@ -666,7 +719,7 @@ void collision3D(double R, double m1, double m2, double r1, double r2,
        v=sqrt(vx21*vx21 +vy21*vy21 +vz21*vz21);
        
 //     **** return if distance between balls smaller than sum of radii ****
-       if (d<r12) {error=2; return;}
+      // if (d<r12) {error=2; return;}
        
 //     **** return if relative speed = 0 ****
        if (v==0) {error=1; return;}
@@ -766,14 +819,14 @@ void collision3D(double R, double m1, double m2, double r1, double r2,
         
 
 //     ***  velocity correction for inelastic collisions ***
-
+/*
        vx1=(vx1-vx_cm)*R + vx_cm;
        vy1=(vy1-vy_cm)*R + vy_cm;
        vz1=(vz1-vz_cm)*R + vz_cm;
        vx2=(vx2-vx_cm)*R + vx_cm;
        vy2=(vy2-vy_cm)*R + vy_cm;
        vz2=(vz2-vz_cm)*R + vz_cm;  
-
+*/
        return;
 }
 /*
@@ -1199,10 +1252,10 @@ void init_central(){
 	    break;
   }
     
-    ball1.pos=Vec3f(-4,-BOX_SIZE/2+ball1.r,0);
+    ball1.pos=Vec3f(-4,ball1.r,0);
     ball1.color= Vec3f(1,0,0);
     
-    ball2.pos=Vec3f(4,-BOX_SIZE/2+ball2.r,0);
+    ball2.pos=Vec3f(4,ball2.r,0);
     ball2.color= Vec3f(0,0,1);
     
     bp.bA = &ball1;
@@ -1212,21 +1265,21 @@ void init_central(){
 void init(){
      
    //ball 1
-    ball1.m=0.5f;
+    ball1.m=0.9f;
     ball1.r=0.5f; 
    
-    ball1.pos=Vec3f(0,ball1.r,-2);
-    ball1.v=Vec3f(0,0,4.5);  
+    ball1.pos=Vec3f(3,ball1.r,-3);
+    ball1.v=Vec3f(5,0,4);  
     
-    ball1.color= Vec3f(1,0,0);
+    ball1.color= Vec3f(1,0,0);//red
     
     
     //ball 2
     ball2.r=0.7f;
     ball2.m=0.7f;
     
-    ball2.pos=Vec3f(0,ball2.r,0);
-    ball2.v=Vec3f(0,0,-4);  
+    ball2.pos=Vec3f(5,ball2.r,0);
+    ball2.v=Vec3f(0,0,0);  
     
     ball2.color= Vec3f(0,0,1);
    
@@ -1684,17 +1737,20 @@ void update(int value) {
 	  // pullBall(&ball2); 
 	   int error;
 	   //_3D_collision_and_responce(bp);
-	   collision3D(0, bp.bA->m, bp.bB->m, bp.bA->r, bp.bB->r, 
-		       &bp.bA->pos[0],&bp.bA->pos[1],&bp.bA->pos[2], 
-		       &bp.bB->pos[0], &bp.bB->pos[1],&bp.bB->pos[2] ,
-		       &bp.bA->v[0],&bp.bA->v[1],&bp.bA->v[2],
-		       &bp.bB->v[0],&bp.bB->v[1],&bp.bB->v[2], &error);
+	   if(check_collision(bp))collision3D(0, bp.bA->m, bp.bB->m, bp.bA->r, bp.bB->r, 
+		       bp.bA->pos[0],bp.bA->pos[1],bp.bA->pos[2], 
+		       bp.bB->pos[0], bp.bB->pos[1],bp.bB->pos[2] ,
+		       bp.bA->v[0],bp.bA->v[1],bp.bA->v[2],
+		       bp.bB->v[0],bp.bB->v[1],bp.bB->v[2], error);
+	   
 	   /*
 	   if(check_wall_collision(bw) || box)ideal_responce(bw);
            if(check_wall_collision(bw2)|| box)ideal_responce(bw2);
 	   
 	   if(check_collision(bp)) responce(bp);
 	   */
+	   //if(check_collision(bp))elastic_3D(bp);
+	   
 	break;
  
       case 2:
