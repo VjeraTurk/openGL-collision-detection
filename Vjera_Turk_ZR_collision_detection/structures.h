@@ -12,16 +12,15 @@
 
 struct Ball{
   Vec3f pos; // position
-  Vec3f v; //velocity with direction
+  Vec3f v;  // velocity vector
   
-  float m;
-  
+  float m; // ball mass
   float t_red;
   
   Ball* next;
  
-  float r;
-  Vec3f color;
+  float r; //bal radius
+  Vec3f color; 
 };
 
 struct BallPair{
