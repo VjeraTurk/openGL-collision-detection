@@ -1,3 +1,27 @@
+/* Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above notice and this permission notice shall be included in all copies
+ * or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+/* File for "Collision Detection" lesson of the OpenGL tutorial on
+ * www.videotutorialsrock.com
+ */
+
+
+
 #include <math.h>
 
 #include "vec3f.h"
@@ -40,14 +64,6 @@ Vec3f Vec3f::operator-(const Vec3f &other) const {
 
 Vec3f Vec3f::operator-() const {
 	return Vec3f(-v[0], -v[1], -v[2]);
-}
-
-//tok zna dal radi :(
-bool Vec3f::operator==( Vec3f &other)  {
-    
-    if((v[0] == other.v[0]) && (v[1] == other.v[1])&&( v[2] == other.v[2]))return 1;
-    
-    return 0;
 }
 
 const Vec3f &Vec3f::operator*=(float scale) {
@@ -109,29 +125,8 @@ ostream &operator<<(ostream &output, const Vec3f &v) {
 	cout << '(' << v[0] << ", " << v[1] << ", " << v[2] << ')';
 	return output;
 }
-Vec3f crossProduct( const Vec3f &v1,  const Vec3f &v2 )
-{
-    Vec3f vCrossProduct;
 
-    vCrossProduct[0] = v1[1] * v2[2] - v1[2] * v2[1];
-    vCrossProduct[1] = v1[2] * v2[0] - v1[0] * v2[2];
-    vCrossProduct[2] = v1[0] * v2[1] - v1[1] * v2[0];
 
-    return vCrossProduct;
-}
-
-//tko zna dal radi :(
-bool isNull(Vec3f v){
-  
-    if(v[0] == 0 && v[1]==0 && v[2]==0) return 1;
-
-  return 0;
-}
-
- float dotProduct( const Vec3f &v1,  const Vec3f &v2 )
-{
-    return( v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]  );
-}
 
 
 
