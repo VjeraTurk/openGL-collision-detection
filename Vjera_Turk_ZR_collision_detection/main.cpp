@@ -5,8 +5,10 @@
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "vec3f.h"
 
+//#include "text3d.h"
 #include "lighting.h"
 #include "navigation.h"
 #include "structures.h"
@@ -16,7 +18,7 @@
 
 using namespace std;
 
-int selection=1;
+int selection=0;
 bool box=1;
 
 //all selections 
@@ -852,32 +854,7 @@ bool check_wall_collision(BallWallPair pair){
    return b->pos.dot(dir) + b->r >= BOX_SIZE / 2 && b->v.dot(dir) > 0;
    
 }
-/*
-void real_responce(BallWallPair pair){
-  
-   Ball *b = pair.ball;
-  
-   float m_1= b->m;
-   float m_2= 1; //loptice s vremenom stanu na pod, trepere dakle brzina im nije 0, polako tonu u pod
-   
-   float v_1;
-   float v_2=0;
 
-  //v_1'=\frac{(m_1-m_2)v_1+2m_2v_2}{m_1+m_2}
-  //v_2'=\frac{(m_2-m_1)v_2+2m_1v_1}{m_1+m_2}
-   
-   v_1=b->v[0];
-   b->v[0]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
-
-   v_1 = b->v[1];
-   b->v[1]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
-
-   v_1 = b->v[2];
-   b->v[2]= ((m_1 - m_2) * v_1	+ 2 * m_2 * v_2) / (m_1 + m_2) ;
-  
-   
-}
-*/
 void ideal_responce(BallWallPair *pair){
   
    Ball *b = pair->ball;
@@ -894,15 +871,15 @@ Ball *create_list(int max){
     Ball* ball;
     
   for(int i = 0; i < max; i++) {
-        ball = new Ball();
+      ball = new Ball();
 	
-	ball->r = 0.1f * randomFloat() + 0.1f;
-	ball->m=ball->r;
+      ball->r = 0.1f * randomFloat() + 0.1f;
+      ball->m=ball->r;
       
-      ball->pos = Vec3f(8 * randomFloat() - 4, 8 * randomFloat() - 4, 8 * randomFloat() -4);
-      //ball->v = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 8 * randomFloat() - 4);
-      ball->pos = Vec3f(8 * randomFloat() - 4, -BOX_SIZE/2+ball->r, 8 * randomFloat() -4);
-      ball->v = Vec3f(8,0,0);
+      ball->pos = Vec3f((BOX_SIZE-3) * randomFloat() - 4, (BOX_SIZE-3) * randomFloat() - 4, 8 * randomFloat() -4);
+      ball->v = Vec3f((BOX_SIZE-3) * randomFloat() - 4,(BOX_SIZE-3) * randomFloat() - 4, (BOX_SIZE-3) * randomFloat() - 4);
+      //ball->pos = Vec3f(8 * randomFloat() - 4, -BOX_SIZE/2+ball->r, 8 * randomFloat() -4);
+      //ball->v = Vec3f(8,0,0);
       
       ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
   
@@ -913,7 +890,6 @@ Ball *create_list(int max){
       
       else  temp->next = ball;
       temp = ball;
-    // cout<<ball->pos[3]<<endl;
   }
   return head;
 }
@@ -1039,6 +1015,10 @@ void multiple_balls_collision(){
 int central=0;
 void init_central(){
   
+    elev=17.8;
+    delev=0;
+    azim=0; 
+    dazim=0;
   switch(central){
     
     case 1:
@@ -1055,7 +1035,7 @@ void init_central(){
 	    ball2.m=0.4f;
 	    
 	    ball1.v=Vec3f(4,0,0);  
-	    ball2.v=Vec3f(-10,0,0); 
+	    ball2.v=Vec3f(0,0,0); 
 	    
 	    break;
     case 2: 
@@ -1111,8 +1091,14 @@ void init_central(){
 void init(){
   
   switch(selection){
+    case 0:
+	  break;
     case 1: //case of 2 balls
-  
+    
+   // glRotated(elev+delev, 1.0, 0.0, 0.0);
+   // glRotated(azim+dazim, 0.0, 1.0, 0.0);
+
+       
     ball1.color= Vec3f(1,0,0);// ball1 = red
     ball2.color= Vec3f(0,0,1);//ball2 = blue     
    
@@ -1148,6 +1134,10 @@ void init(){
     break;
 	
     case 3: 
+    elev=0;
+    delev=0;
+    azim=0; 
+    dazim=0;
    //selection 3
     _octree = new Octree(Vec3f(-BOX_SIZE / 2, -BOX_SIZE / 2, -BOX_SIZE / 2),Vec3f(BOX_SIZE / 2, BOX_SIZE / 2, BOX_SIZE / 2), 1);
     
@@ -1429,9 +1419,17 @@ void handleKeypress2(unsigned char key, int x, int y) {
 			//TwTerminate();
 			exit(0);
 		case '1': selection=1;
+			  elev=14.6;
+			  delev=0;
+			  azim=55; 
+			  dazim=0;
 			  init();
 			break;
 		case '2': selection=2;
+			  elev=0;
+			  delev=0;
+			  azim=0; 
+			  dazim=0;
   			init();
 			break;
 		case '3': selection=3;
@@ -1554,6 +1552,8 @@ void advanceAllBalls(float t, float &timeUntilUpdate) {
 
 void advance2Balls(float t, float &timeUntilUpdate) {
 int error=0;
+    cout<<elev<<' '<<delev<<endl;
+    cout<<azim<<' '<<dazim<<endl;
   while (t > 0) {
 		if (timeUntilUpdate <= t) {
 			   pullBall(&ball1);

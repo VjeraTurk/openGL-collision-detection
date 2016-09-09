@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -Wall
 PROG = collision_detection
 
-SRCS = main.cpp  vec3f.cpp 
+SRCS = main.cpp  vec3f.cpp text3d.cpp
 
 ifeq ($(shell uname),Darwin)
 	LIBS = -framework OpenGL -framework GLUT
