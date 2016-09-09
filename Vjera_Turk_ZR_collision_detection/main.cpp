@@ -11,7 +11,7 @@
 #include "navigation.h"
 #include "structures.h"
 
-#define RED 50
+#define RED 40
 #define BOX_SIZE 12
 
 using namespace std;
@@ -419,7 +419,8 @@ void drawCube(float box_size){
 
 	//Top face
 
-	glColor4f(1,-(c.t_red/50)+ 1, -(c.t_red/50)+ 1, ALPHA);	
+	glColor4f(1,-(c.t_red/RED)+ 1, -(c.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(c.t_red/RED)+ 1,1, -(c.t_red/RED)+ 1, ALPHA);	
 	glNormal3f(0.0, -1.0f, 0.0f);
 	
 	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
@@ -429,7 +430,9 @@ void drawCube(float box_size){
 	
 	//Bottom face
 
-	glColor4f(1,-(b.t_red/50)+ 1, -(b.t_red/50)+ 1, ALPHA);	
+	glColor4f(1,-(b.t_red/RED)+ 1, -(b.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(b.t_red/RED)+ 1,1, -(b.t_red/RED)+ 1, ALPHA);	
+
 	glNormal3f(0.0, 1.0f, 0.0f);
 	
 	glVertex3f(-box_size / 2, -box_size / 2, -box_size / 2);
@@ -440,7 +443,8 @@ void drawCube(float box_size){
 	//Left face
 	
 
-	glColor4f(1,-(l.t_red/50)+ 1, -(l.t_red/50)+ 1, ALPHA);	
+	glColor4f(1,-(l.t_red/RED)+ 1, -(l.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(l.t_red/RED)+ 1,1, -(l.t_red/RED)+ 1, ALPHA);	
 	
 
 	glNormal3f(1.0, 0.0f, 0.0f);
@@ -451,8 +455,10 @@ void drawCube(float box_size){
 	glVertex3f(-box_size / 2, box_size / 2, -box_size / 2);
 	
 	//Right face
-	glColor4f(1,-(r.t_red/50)+ 1, -(r.t_red/50)+ 1, ALPHA);	
+	glColor4f(1,-(r.t_red/RED)+ 1, -(r.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(r.t_red/RED)+ 1,1, -(r.t_red/RED)+ 1, ALPHA);	
 
+	
 	glNormal3f(-1.0, 0.0f, 0.0f);
 	
 	glVertex3f(box_size / 2, -box_size / 2, -box_size / 2);
@@ -461,7 +467,8 @@ void drawCube(float box_size){
 	glVertex3f(box_size / 2, -box_size / 2, box_size / 2);
 		
 	//near face
-        glColor4f(1,-(n.t_red/50)+ 1, -(n.t_red/50)+ 1, ALPHA);	
+        glColor4f(1,-(n.t_red/RED)+ 1, -(n.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(n.t_red/RED)+ 1,1, -(n.t_red/RED)+ 1, ALPHA);	
 
 	glNormal3f(0.0, 0.0f, -1.0f);
 	
@@ -471,7 +478,8 @@ void drawCube(float box_size){
 	glVertex3f(-box_size / 2, box_size / 2, box_size / 2);
 	
 	//Far face
-	glColor4f(1,-(f.t_red/50)+ 1, -(f.t_red/50)+ 1, ALPHA);	
+	glColor4f(1,-(f.t_red/RED)+ 1, -(f.t_red/RED)+ 1, ALPHA);	
+	glColor4f(-(f.t_red/RED)+ 1,1, -(f.t_red/RED)+ 1, ALPHA);	
 
 	glNormal3f(0.0, 0.0f, 1.0f);
 	
@@ -936,7 +944,7 @@ void drawBalls(Ball *head){
 		
 		if(temp->t_red){
 		
-		  glColor3f(1, (-temp->t_red/50)+1,(-temp->t_red/50)+1);  
+		  glColor3f(1, (-temp->t_red/RED)+1,(-temp->t_red/RED)+1);  
 		  temp->t_red--;
 		  
 		}else{
@@ -1115,8 +1123,8 @@ void init(){
     ball1.v=Vec3f(1,0,1);  
     
     //ball 2
-    ball2.r=0.5;
-    ball2.m=1;
+    ball2.r=0.6;
+    ball2.m=1.5;
     ball2.pos=Vec3f(-5,-BOX_SIZE/2+ball2.r,3);
     ball2.v=Vec3f(2,0,-2);  
 
@@ -1316,7 +1324,7 @@ bool testBallWallCollision(Ball* ball, Wall* wall) {
 	
 	if( ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir)>0 ){ 
 	  
-	  wall->t_red=50.0f;
+	  wall->t_red=RED;
 	}
 	
 	return ball->pos.dot(dir) + ball->r >= BOX_SIZE / 2 && ball->v.dot(dir) > 0;
@@ -1392,7 +1400,7 @@ void drawBalls(){
 		
 		if(ball->t_red){
 		
-		  glColor3f(1, (-ball->t_red/50)+1,(-ball->t_red/50)+1);  
+		  glColor3f(1, (-ball->t_red/RED)+1,(-ball->t_red/RED)+1);  
 		  ball->t_red--;
 		  
 		}else{
