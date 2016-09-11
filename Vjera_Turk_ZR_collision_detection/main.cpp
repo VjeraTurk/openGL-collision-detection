@@ -645,7 +645,7 @@ void responce(BallPair pair){
    */
   
 }
-
+/*
 void elastic_3D(BallPair pair){
 
  
@@ -693,17 +693,36 @@ void elastic_3D(BallPair pair){
   // cout<<'b'<<Beta<<endl;   
   // cout<<'c'<<Gamma<<endl;   
    
-   /*
-   b1->v[0]= (v_1x*(m_1 - m_2) + v_2x*(2 * m_2)) / (m_1 + m_2);
-   b1->v[1]= (v_1y*(m_1 - m_2) + v_2y*(2 * m_2)) / (m_1 + m_2);
-   b1->v[2]= (v_1z*(m_1 - m_2) + v_2z*(2 * m_2)) / (m_1 + m_2);
    
-   b2->v[0] = (v_2x*(m_2 - m_1) + v_1x*(2 * m_1 ))/ (m_1 + m_2); 
-   b2->v[1] = (v_2y*(m_2 - m_1) + v_1y*(2 * m_1 ))/ (m_1 + m_2); 
-   b2->v[2] = (v_2z*(m_2 - m_1) + v_1z*(2 * m_1 ))/ (m_1 + m_2); 
-  */
-}
+   //b1->v[0]= (v_1x*(m_1 - m_2) + v_2x*(2 * m_2)) / (m_1 + m_2);
+   //b1->v[1]= (v_1y*(m_1 - m_2) + v_2y*(2 * m_2)) / (m_1 + m_2);
+   //b1->v[2]= (v_1z*(m_1 - m_2) + v_2z*(2 * m_2)) / (m_1 + m_2);
+   
+   //b2->v[0] = (v_2x*(m_2 - m_1) + v_1x*(2 * m_1 ))/ (m_1 + m_2); 
+   //b2->v[1] = (v_2y*(m_2 - m_1) + v_1y*(2 * m_1 ))/ (m_1 + m_2); 
+   //b2->v[2] = (v_2z*(m_2 - m_1) + v_1z*(2 * m_1 ))/ (m_1 + m_2); 
 
+}
+*/
+
+void angleFree2D(BallPair pair){
+  Ball *b1=pair.bA;
+  Ball *b2=pair.bB;
+  
+  float m1=b1->m;
+  float m2=b2->m;
+  Vec3f v1=b1->v;
+  Vec3f v2=b2->v;  
+  Vec3f v12=v1-v2;
+  Vec3f v21=v1-v2;
+  Vec3f pos12=b1->pos-b2->pos;
+  Vec3f pos21=b2->pos-b1->pos;  
+  
+  b1->v -= pos12*(v12.dot(pos12))*((2*m2)/(m1+m2));
+  cout<<v1[0]<<' '<<v1[1]<<' '<<v1[2]<<endl;
+  //b2->v -= pos21*v21.dot(pos21)*((2*m2)/(m1+m2));
+  
+}
 void collision2D(BallPair pair){
 
   Ball *b1=pair.bA;
@@ -713,19 +732,24 @@ void collision2D(BallPair pair){
   float m2=b2->m;
   
   float m21 = m2/m1;
+  
   float x21 = b2->pos[0]- b1->pos[0];
   float z21 = b2->pos[2]- b1->pos[2];
+  
   float vx21 = b2->v[0]- b1->v[0];
   float vz21 = b2->v[2]- b1->v[2];
   
-   float a=z21/x21;
+   float a=z21/x21; //tanges kuta
+  
    float dvx2= -2*(vx21 +a*vz21)/((1+a*a)*(1+m21)) ;
+   
        b2->v[0]+=dvx2;
        b2->v[2]+=a*dvx2;
        b1->v[0]-=m21*dvx2;
        b1->v[2]-=a*m21*dvx2;
   
-}  
+} 
+/*
 void collision2D2(BallPair pair){
   
  // Referring now the initial velocities explicitly to ball 2 
@@ -777,12 +801,12 @@ void collision2D2(BallPair pair){
 //Use the collision angle (A), the ball's initial velocity (u) 
 //and ball's initial direction (D) to derive it's x/y velocity in the new rotated coordinate system:
 
-/*    v1x = u1 X cos(D1 - A);
+    v1x = u1 X cos(D1 - A);
     v1y = u1 X sin(D1 - A);
     v2x = u2 X cos(D2 - A);
     v2y = u2 X sin(D2 - A);
     f2x = v2x(m1 - m2) + 2m2v1xm1 + m2 
-    */
+    
 
 float f1x = v1xs*(m1 - m2) + 2*m2*v2xs*m1 + m2; 
 float f2x = v2xs*(m1 - m2) + 2*m2*v1xs*m1 + m2; 
@@ -799,55 +823,37 @@ float D2 = atan2(v2ys, f2x) + A;
   b1->v= Vec3f(cos(D1),0,sin(D1));
   b2->v= Vec3f(cos(D2),0,sin(D2));
   
-}
+}*/
 
-void collision3D(BallPair *pair,
-                 float& vx1, float& vy1, float& vz1,
+void collision3D(BallPair pair,
                  float& vx2, float& vy2, float& vz2)     {
 
-float  r12,m21,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,
+float  r12,m21,st,ct,sp,cp,vx1r,vy1r,vz1r,theta2,phi2,
 	           thetav,phiv,dr,alpha,beta,sbeta,cbeta,a,dvz2,
-			   vx2r,vy2r,vz2r,x21,y21,z21,vx21,vy21,vz21,x1,x2,y1,y2,z1,z2;
-	Ball *b1=pair->bA;
-	Ball *b2=pair->bB;
-	
-//     **** initialize some variables ****
+			   vx2r,vy2r,vz2r;
+	Ball *b1=pair.bA;
+	Ball *b2=pair.bB;
+
 	m21=b2->m/b1->m;
 	r12=b1->r+b2->r;
-	x21=b2->pos[0]-b1->pos[0];
-	y21=b2->pos[1]-b1->pos[1];
-	z21=b2->pos[2]-b1->pos[2];
+     
+      Vec3f pos21=b2->pos-b1->pos; 
+      float d=pos21.magnitude(); //relativna udaljenost
 
-       Vec3f pos21=b2->pos-b1->pos;
-       
-       vx21=vx2-vx1;
-       vy21=vy2-vy1;
-       vz21=vz2-vz1;
-      
-       Vec3f D=b2->pos - b1->pos;
-       float d=D.magnitude();
-       
-       Vec3f v21=b2->v - b1->v;
-       float v=v21.magnitude();
-       
-	cout<<v<<' '<<d<<endl;
+      Vec3f v21=b2->v - b1->v;
+      float v=v21.magnitude(); //relativna brzina
 	
-//     **** shift coordinate system so that ball 1 is at the origin ***
-       x2=x21;
-       y2=y21;
-       z2=z21;
-       Vec3f p2=pos21;
+//     loptica 1 u ishodište
+       b2->pos=pos21;
+       Vec3f pos2=pos21;
        
-//     **** boost coordinate system so that ball 2 is resting ***
-       vx1=-vx21;
-       vy1=-vy21;
-       vz1=-vz21;
-       Vec3f v1=-v21;
-
+//     mijenjamo joj brzinu b1 tako da b2 stoji u odnosu na nju ***
+       b1->v=-v21;
 //     **** find the polar coordinates of the location of ball 2 ***
-       theta2=acos(z2/d);
-
-       if (x2==0 && y2==0) {phi2=0;} else {phi2=atan2(y2,x2);}
+       theta2=acos(b2->pos[2]/d);
+      
+       if (b2->pos[1]==0 && b2->pos[0]==0) {phi2=0;} else {phi2=atan2(b2->pos[1],b2->pos[0]);}
+      
        st=sin(theta2);
        ct=cos(theta2);
        sp=sin(phi2);
@@ -855,19 +861,15 @@ float  r12,m21,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,
 
 //     **** express the velocity vector of ball 1 in a rotated coordinate
 //          system where ball 2 lies on the z-axis ******
-       vx1r=ct*cp*vx1+ct*sp*vy1-st*vz1;
-       vy1r=cp*vy1-sp*vx1;
-       vz1r=st*cp*vx1+st*sp*vy1+ct*vz1;
-       Vec3f v1r=Vec3f(ct*cp*vx1+ct*sp*vy1-st*vz1,cp*vy1-sp*vx1,st*cp*vx1+st*sp*vy1+ct*vz1);
        
-       /*
-       fvz1r = vz1r/v ;
-       if (fvz1r>1) {fvz1r=1;}   // fix for possible rounding errors
-          else if (fvz1r<-1) {fvz1r=-1;} 
-       thetav=acos(fvz1r);
-       if (vx1r==0 && vy1r==0) {phiv=0;} else {phiv=atan2(vy1r,vx1r);}
-	*/
-        						
+       vx1r=ct*cp*b1->v[0]+ct*sp*b1->v[1]-st*b1->v[2];
+       vy1r=cp*b1->v[1]-sp*b1->v[0];
+       vz1r=st*cp*b1->v[0]+st*sp*b1->v[1]+ct*b1->v[2];
+      
+       Vec3f v1r=Vec3f(ct*cp*b1->v[0]+ct*sp*b1->v[1]-st*b1->v[2],cp*b1->v[1]-sp*b1->v[0],st*cp*b1->v[0]+st*sp*b1->v[1]+ct*b1->v[2]);
+	
+       thetav=acos(vz1r/v);
+       phiv=atan2(vy1r,vx1r);						
 //     **** calculate the normalized impact parameter ***
        dr=d*sin(thetav)/r12;
  
@@ -876,32 +878,28 @@ float  r12,m21,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,
        beta=phiv;
        sbeta=sin(beta);
        cbeta=cos(beta);
-//     **** update positions and reverse the coordinate shift ***
-       x2=x2+x1;
-       y2=y2+y1;
-       z2=z2+z1;
        
-       x1=x1;
-       y1=y1;
-       z1=z1;
+//     **** update positions and reverse the coordinate shift ***
+	b2->pos=pos2+b1->pos;
+
+       //cout<<x1<<y1<<z1<<endl;
 //  ***  update velocities ***
        a=tan(thetav+alpha);
        dvz2=2*(vz1r+a*(cbeta*vx1r+sbeta*vy1r))/((1+a*a)*(1+m21));
+       
        vz2r=dvz2;
        vx2r=a*cbeta*dvz2;
        vy2r=a*sbeta*dvz2;
+       
        vz1r=vz1r-m21*vz2r;
        vx1r=vx1r-m21*vx2r;
        vy1r=vy1r-m21*vy2r;
        
 //     **** rotate the velocity vectors back and add the initial velocity
-//           vector of ball 2 to retrieve the original coordinate system ****         
-       vx1=ct*cp*vx1r-sp*vy1r+st*cp*vz1r +vx2;
-       vy1=ct*sp*vx1r+cp*vy1r+st*sp*vz1r +vy2;
-       vz1=ct*vz1r-st*vx1r               +vz2;
-       vx2=ct*cp*vx2r-sp*vy2r+st*cp*vz2r +vx2;
-       vy2=ct*sp*vx2r+cp*vy2r+st*sp*vz2r +vy2;
-       vz2=ct*vz2r-st*vx2r               +vz2;
+//    vector of ball 2 to retrieve the original coordinate system ****         
+       b1->v=Vec3f(ct*cp*vx1r-sp*vy1r+st*cp*vz1r +vx2,ct*sp*vx1r+cp*vy1r+st*sp*vz1r+vy2,ct*vz1r-st*vx1r+vz2);
+       b2->v=Vec3f(ct*cp*vx2r-sp*vy2r+st*cp*vz2r+vx2,ct*sp*vx2r+cp*vy2r+st*sp*vz2r+vy2,ct*vz2r-st*vx2r+vz2);
+      
        return;
 }
 
@@ -1016,8 +1014,7 @@ void bruteForce(Ball *head){
       bp.bA = temp1;
       bp.bB = temp2;
       
-        if(check_collision(bp))collision3D(&bp,
-		      temp1->v[0],temp1->v[1],temp1->v[2],
+        if(check_collision(bp))collision3D(bp,
 		      temp2->v[0],temp2->v[1],temp2->v[2]);
 	  
 	  
@@ -1553,6 +1550,7 @@ void handleKeypress2(unsigned char key, int x, int y) {
 			  break;
 				case ' ':
 			//Add balls with a random position, velocity, radius, and color
+			if(selection!=3)break;
 			for(int i = 0; i < 100; i++) {
 				Ball* ball = new Ball();
 				ball->pos = Vec3f(8 * randomFloat() - 4,
@@ -1628,10 +1626,6 @@ void display()
 
 	  break;
     }
-
-    
-    
-    
     glutSwapBuffers();
 }
 
@@ -1664,13 +1658,12 @@ void advance2Balls(float t, float &timeUntilUpdate) {
 			   pullBall(&ball2);
 			   move_ball(&ball1,t);
 			   move_ball(&ball2,t);
-	      //if(check_collision(bp))elastic_3D(bp);
-	      if(check_collision(bp))collision2D(bp);
-	      
-	     /* if(check_collision(bp))collision3d(&bp,
-		      bp.bA->v[0],bp.bA->v[1],bp.bA->v[2],
+	      if(check_collision(bp))angleFree2D(bp);
+	     //if(check_collision(bp))collision2D(bp);
+	   /*   
+	      if(check_collision(bp))collision3D(bp,
 		      bp.bB->v[0],bp.bB->v[1],bp.bB->v[2]);
-	      */
+	     */ 
 	   
 	   if(check_wall_collision(bw))ideal_responce(&bw);
            if(check_wall_collision(bw2))ideal_responce(&bw2);
