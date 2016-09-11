@@ -5,7 +5,9 @@
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
+#include <valarray>
 #include <string.h>
+
 #include "vec3f.h"
 
 //#include "text3d.h"
@@ -20,6 +22,9 @@ using namespace std;
 
 int selection=0;
 bool box=1;
+int pause = 1;
+int ot = 1;
+
 
 //all selections 
 const float ALPHA = 0.6f;
@@ -53,6 +58,7 @@ void drawCube(float box_size);
 float randomFloat();
 void update(int value);
 void display();
+void handleKeypress2(unsigned char key, int x, int y);
 //const float t =0.01f;
 
 //selection 1
@@ -642,13 +648,13 @@ void responce(BallPair pair){
 
 void elastic_3D(BallPair pair){
 
-  
+ 
   Ball *b1= pair.bA;
   Ball *b2=  pair.bB;
    
   float m_1=b1->m;
   float m_2=b2->m;
-  
+ 
   float r12=b1->r+b2->r;
   float m21=b2->m/b1->m;
   
@@ -667,23 +673,27 @@ void elastic_3D(BallPair pair){
    float v_2y=v_2[1];
    float v_2z=v_2[2];  
    
-   float P = sqrt(v_1x*v_1x+v_1y*v_1y+v_1z*v_1z); //magnitude
-   
-  // cout<<P<<endl;
-   
-   float cosAlpha= v_1x/P;
-   float cosBeta= v_1y/P; 
-   float cosGamma= v_1z/P;
+   float P1 = sqrt(v_1x*v_1x+v_1y*v_1y+v_1z*v_1z); //magnitude
+   float P2 = sqrt(v_2x*v_2x+v_2y*v_2y+v_2z*v_2z); //magnitude
+ 
+   float Alpha1 = acos(v_1x/P1);
+   float Beta1 = acos(v_1y/P1);
+   float Gamma1 = acos(v_1z/P1);
 
-   float Alpha = acos(cosAlpha);
-   float Beta = acos(cosBeta);
-   float Gamma = acos(cosGamma);
-
-   cout<<'a'<<Alpha<<endl;
-   cout<<'b'<<Beta<<endl;   
-   cout<<'c'<<Gamma<<endl;   
+   float Alpha2 = acos(v_2x/P2);
+   float Beta2 = acos(v_2y/P2);
+   float Gamma2 = acos(v_2z/P2);   
    
-  /*
+   
+   Vec3f d=v_1-v_2;
+   float D=d.magnitude();
+   cout<<d[0]<<' '<<d[1]<<' '<<d[2]<<endl;
+   cout<<D<<endl;
+  // cout<<'a'<<Alpha<<endl;
+  // cout<<'b'<<Beta<<endl;   
+  // cout<<'c'<<Gamma<<endl;   
+   
+   /*
    b1->v[0]= (v_1x*(m_1 - m_2) + v_2x*(2 * m_2)) / (m_1 + m_2);
    b1->v[1]= (v_1y*(m_1 - m_2) + v_2y*(2 * m_2)) / (m_1 + m_2);
    b1->v[2]= (v_1z*(m_1 - m_2) + v_2z*(2 * m_2)) / (m_1 + m_2);
@@ -693,150 +703,205 @@ void elastic_3D(BallPair pair){
    b2->v[2] = (v_2z*(m_2 - m_1) + v_1z*(2 * m_1 ))/ (m_1 + m_2); 
   */
 }
+
+void collision2D(BallPair pair){
+
+  Ball *b1=pair.bA;
+  Ball *b2=pair.bB;
+
+  float m1=b1->m;
+  float m2=b2->m;
+  
+  float m21 = m2/m1;
+  float x21 = b2->pos[0]- b1->pos[0];
+  float z21 = b2->pos[2]- b1->pos[2];
+  float vx21 = b2->v[0]- b1->v[0];
+  float vz21 = b2->v[2]- b1->v[2];
+  
+   float a=z21/x21;
+   float dvx2= -2*(vx21 +a*vz21)/((1+a*a)*(1+m21)) ;
+       b2->v[0]+=dvx2;
+       b2->v[2]+=a*dvx2;
+       b1->v[0]-=m21*dvx2;
+       b1->v[2]-=a*m21*dvx2;
+  
+}  
+void collision2D2(BallPair pair){
+  
+ // Referring now the initial velocities explicitly to ball 2 
+ // and noting that the angle θ is the sum of the relative velocity angle between ball 1 and 2
+//(7)       γv = arctan [ (vy,1-vy,2)/(vx,1-vx,2) ]
+  
+  Ball *b1=pair.bA;
+  Ball *b2=pair.bB;
+
+  float m1=b1->m;
+  float m2=b2->m;
  
-void collision3D(float R, float m1, float m2, float r1, float r2,
-                     float& x1, float& y1,float& z1,
-                     float& x2, float& y2, float& z2,
-                     float& vx1, float& vy1, float& vz1,
-                     float& vx2, float& vy2, float& vz2,
-                     int& error)     {
+  float r12=b1->r+b2->r;
+  float m21=b2->m/b1->m;
+  
+   Vec3f v_1 = b1->v;
+   Vec3f v_2 = b2->v;   
+  
+   Vec3f v1x = Vec3f(v_1[0],0,0);
+   Vec3f v1y = Vec3f(0,v_1[1],0);
+   Vec3f v1z = Vec3f(0,0,v_1[2]);
+   
+   float v_1x=v_1[0];
+   float v_1y=v_1[1];
+   float v_1z=v_1[2];   
+
+   float v_2x=v_2[0];
+   float v_2y=v_2[1];
+   float v_2z=v_2[2];  
+   
+   float P1 = sqrt(v_1x*v_1x+v_1y*v_1y+v_1z*v_1z); //magnitude
+   float P2 = sqrt(v_2x*v_2x+v_2y*v_2y+v_2z*v_2z); //magnitude
+  
+   float Alpha1 = acos(v_1x/P1);
+   float Beta1 = acos(v_1y/P1);
+   float Gamma1 = acos(v_1z/P1);
+
+   float Alpha2 = acos(v_2x/P2);
+   float Beta2 = acos(v_2y/P2);
+   float Gamma2 = acos(v_2z/P2);   
+   
+  float A = atan2(b1->pos[2] - b2->pos[2],b1->pos[0] - b2->pos[0]);
+  
+  float v1xs = b1->v[0] * cos(Alpha1 - A);
+  float v1ys = b1->v[2] * sin(Alpha1 - A);
+  float v2xs = b2->v[0] * cos(Alpha2 - A);
+  float v2ys = b2->v[2] * sin(Alpha2 - A);
+  
+//Use the collision angle (A), the ball's initial velocity (u) 
+//and ball's initial direction (D) to derive it's x/y velocity in the new rotated coordinate system:
+
+/*    v1x = u1 X cos(D1 - A);
+    v1y = u1 X sin(D1 - A);
+    v2x = u2 X cos(D2 - A);
+    v2y = u2 X sin(D2 - A);
+    f2x = v2x(m1 - m2) + 2m2v1xm1 + m2 
+    */
+
+float f1x = v1xs*(m1 - m2) + 2*m2*v2xs*m1 + m2; 
+float f2x = v2xs*(m1 - m2) + 2*m2*v1xs*m1 + m2; 
 
 
-       float  pi,r12,m21,d,v,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,fvz1r,
-	           thetav,phiv,dr,alpha,beta,sbeta,cbeta,dc,sqs,t,a,dvz2,
-			   vx2r,vy2r,vz2r,x21,y21,z21,vx21,vy21,vz21,vx_cm,vy_cm,vz_cm;
+  P1 = sqrt(f1x*f1x * f1x*f1x + v1ys * v1ys*v1ys);
+  P2 = sqrt(f2x*f2x * f2x*f2x + v2ys * v2ys*v2ys);
 
+float D1 = atan2(v1ys, f1x) + A;
+float D2 = atan2(v2ys, f2x) + A;
+
+  cout<<D1<<endl;
+
+  b1->v= Vec3f(cos(D1),0,sin(D1));
+  b2->v= Vec3f(cos(D2),0,sin(D2));
+  
+}
+
+void collision3D(BallPair *pair,
+                 float& vx1, float& vy1, float& vz1,
+                 float& vx2, float& vy2, float& vz2)     {
+
+float  r12,m21,theta2,phi2,st,ct,sp,cp,vx1r,vy1r,vz1r,
+	           thetav,phiv,dr,alpha,beta,sbeta,cbeta,a,dvz2,
+			   vx2r,vy2r,vz2r,x21,y21,z21,vx21,vy21,vz21,x1,x2,y1,y2,z1,z2;
+	Ball *b1=pair->bA;
+	Ball *b2=pair->bB;
+	
 //     **** initialize some variables ****
-       pi=acos(-1.0E0);
-       error=0;
-       r12=r1+r2;
-       m21=m2/m1;
-       x21=x2-x1;
-       y21=y2-y1;
-       z21=z2-z1;
+	m21=b2->m/b1->m;
+	r12=b1->r+b2->r;
+	x21=b2->pos[0]-b1->pos[0];
+	y21=b2->pos[1]-b1->pos[1];
+	z21=b2->pos[2]-b1->pos[2];
 
+       Vec3f pos21=b2->pos-b1->pos;
+       
        vx21=vx2-vx1;
        vy21=vy2-vy1;
        vz21=vz2-vz1;
+      
+       Vec3f D=b2->pos - b1->pos;
+       float d=D.magnitude();
        
-       vx_cm = (m1*vx1+m2*vx2)/(m1+m2) ;
-       vy_cm = (m1*vy1+m2*vy2)/(m1+m2) ;
-       vz_cm = (m1*vz1+m2*vz2)/(m1+m2) ;  
-
-	   
-//     **** calculate relative distance and relative speed ***
-       d=sqrt(x21*x21 +y21*y21 +z21*z21);
-       v=sqrt(vx21*vx21 +vy21*vy21 +vz21*vz21);
+       Vec3f v21=b2->v - b1->v;
+       float v=v21.magnitude();
        
-//     **** return if distance between balls smaller than sum of radii ****
-      // if (d<r12) {error=2; return;}
-       
-//     **** return if relative speed = 0 ****
-       if (v==0) {error=1; return;}
-       
-
+	cout<<v<<' '<<d<<endl;
+	
 //     **** shift coordinate system so that ball 1 is at the origin ***
        x2=x21;
        y2=y21;
        z2=z21;
+       Vec3f p2=pos21;
        
 //     **** boost coordinate system so that ball 2 is resting ***
        vx1=-vx21;
        vy1=-vy21;
        vz1=-vz21;
+       Vec3f v1=-v21;
 
 //     **** find the polar coordinates of the location of ball 2 ***
        theta2=acos(z2/d);
+
        if (x2==0 && y2==0) {phi2=0;} else {phi2=atan2(y2,x2);}
        st=sin(theta2);
        ct=cos(theta2);
        sp=sin(phi2);
        cp=cos(phi2);
 
-
 //     **** express the velocity vector of ball 1 in a rotated coordinate
 //          system where ball 2 lies on the z-axis ******
        vx1r=ct*cp*vx1+ct*sp*vy1-st*vz1;
        vy1r=cp*vy1-sp*vx1;
        vz1r=st*cp*vx1+st*sp*vy1+ct*vz1;
+       Vec3f v1r=Vec3f(ct*cp*vx1+ct*sp*vy1-st*vz1,cp*vy1-sp*vx1,st*cp*vx1+st*sp*vy1+ct*vz1);
+       
+       /*
        fvz1r = vz1r/v ;
        if (fvz1r>1) {fvz1r=1;}   // fix for possible rounding errors
           else if (fvz1r<-1) {fvz1r=-1;} 
        thetav=acos(fvz1r);
        if (vx1r==0 && vy1r==0) {phiv=0;} else {phiv=atan2(vy1r,vx1r);}
-
+	*/
         						
 //     **** calculate the normalized impact parameter ***
        dr=d*sin(thetav)/r12;
-
-
-//     **** return old positions and velocities if balls do not collide ***
-       if (thetav>pi/2 || fabs(dr)>1) {
-           x2=x2+x1;
-           y2=y2+y1;
-           z2=z2+z1;
-           vx1=vx1+vx2;
-           vy1=vy1+vy2;
-           vz1=vz1+vz2;
-           error=1;
-           return;
-        }
-       
+ 
 //     **** calculate impact angles if balls do collide ***
        alpha=asin(-dr);
        beta=phiv;
        sbeta=sin(beta);
        cbeta=cos(beta);
-        
-       
-//     **** calculate time to collision ***
-       t=(d*cos(thetav) -r12*sqrt(1-dr*dr))/v;
-
-     
 //     **** update positions and reverse the coordinate shift ***
-       x2=x2+vx2*t +x1;
-       y2=y2+vy2*t +y1;
-       z2=z2+vz2*t +z1;
-       x1=(vx1+vx2)*t +x1;
-       y1=(vy1+vy2)*t +y1;
-       z1=(vz1+vz2)*t +z1;
-        
- 
+       x2=x2+x1;
+       y2=y2+y1;
+       z2=z2+z1;
        
+       x1=x1;
+       y1=y1;
+       z1=z1;
 //  ***  update velocities ***
-
        a=tan(thetav+alpha);
-
        dvz2=2*(vz1r+a*(cbeta*vx1r+sbeta*vy1r))/((1+a*a)*(1+m21));
-       
        vz2r=dvz2;
        vx2r=a*cbeta*dvz2;
        vy2r=a*sbeta*dvz2;
        vz1r=vz1r-m21*vz2r;
        vx1r=vx1r-m21*vx2r;
        vy1r=vy1r-m21*vy2r;
-
        
 //     **** rotate the velocity vectors back and add the initial velocity
-//           vector of ball 2 to retrieve the original coordinate system ****
-                     
+//           vector of ball 2 to retrieve the original coordinate system ****         
        vx1=ct*cp*vx1r-sp*vy1r+st*cp*vz1r +vx2;
        vy1=ct*sp*vx1r+cp*vy1r+st*sp*vz1r +vy2;
        vz1=ct*vz1r-st*vx1r               +vz2;
        vx2=ct*cp*vx2r-sp*vy2r+st*cp*vz2r +vx2;
        vy2=ct*sp*vx2r+cp*vy2r+st*sp*vz2r +vy2;
        vz2=ct*vz2r-st*vx2r               +vz2;
-        
-
-//     ***  velocity correction for inelastic collisions ***
-/*
-       vx1=(vx1-vx_cm)*R + vx_cm;
-       vy1=(vy1-vy_cm)*R + vy_cm;
-       vz1=(vz1-vz_cm)*R + vz_cm;
-       vx2=(vx2-vx_cm)*R + vx_cm;
-       vy2=(vy2-vy_cm)*R + vy_cm;
-       vz2=(vz2-vz_cm)*R + vz_cm;  
-*/
        return;
 }
 
@@ -950,13 +1015,11 @@ void bruteForce(Ball *head){
      
       bp.bA = temp1;
       bp.bB = temp2;
-      int error;
-      //if(check_collision(bp))responce(bp);
-       if(check_collision(bp))collision3D(0, bp.bA->m, bp.bB->m, bp.bA->r, bp.bB->r, 
-		       bp.bA->pos[0],bp.bA->pos[1],bp.bA->pos[2], 
-		       bp.bB->pos[0], bp.bB->pos[1],bp.bB->pos[2] ,
-		       bp.bA->v[0],bp.bA->v[1],bp.bA->v[2],
-		       bp.bB->v[0],bp.bB->v[1],bp.bB->v[2], error);
+      
+        if(check_collision(bp))collision3D(&bp,
+		      temp1->v[0],temp1->v[1],temp1->v[2],
+		      temp2->v[0],temp2->v[1],temp2->v[2]);
+	  
 	  
     }   
    
@@ -1051,7 +1114,7 @@ void init_central(){
 	    ball1.r=0.4f; 
 	    
 	    //ball 2
-	    ball2.m=100;
+	    ball2.m=300;
 	    ball2.r=3;
 	    
 	    ball1.v=Vec3f(4,0,0);  
@@ -1078,42 +1141,30 @@ void init_central(){
 	    break;
   }
     
-    ball1.pos=Vec3f(-4,-BOX_SIZE/2+ball1.r,0);
+    ball1.pos=Vec3f(-4,-BOX_SIZE/2+ball1.r,0.5);
     ball1.color= Vec3f(1,0,0);
     
-    ball2.pos=Vec3f(4,-BOX_SIZE/2+ball2.r,0);
+    ball2.pos=Vec3f(4,-BOX_SIZE/2+ball2.r,1);
     ball2.color= Vec3f(0,0,1);
     
     bp.bA = &ball1;
     bp.bB = &ball2; 
     
 }
+
 void init(){
-  
+
   switch(selection){
     case 0:
 	  break;
     case 1: //case of 2 balls
-    
+    pause = 1;    
    // glRotated(elev+delev, 1.0, 0.0, 0.0);
    // glRotated(azim+dazim, 0.0, 1.0, 0.0);
-
-       
+   
     ball1.color= Vec3f(1,0,0);// ball1 = red
     ball2.color= Vec3f(0,0,1);//ball2 = blue     
-   
-    //ball 1
-    ball1.m=0.2;
-    ball1.r=1.5f; 
-    ball1.pos=Vec3f(-5,-BOX_SIZE/2+ ball1.r,-1);
-    ball1.v=Vec3f(1,0,1);  
     
-    //ball 2
-    ball2.r=0.6;
-    ball2.m=1.5;
-    ball2.pos=Vec3f(-5,-BOX_SIZE/2+ball2.r,3);
-    ball2.v=Vec3f(2,0,-2);  
-
     bp.bA = &ball1;
     bp.bB = &ball2;
    
@@ -1126,6 +1177,7 @@ void init(){
     bw2.ball = &ball1;
     bw2.wall = &bottom;
     
+ 
     break;
     
     case 2: 
@@ -1151,9 +1203,6 @@ void init(){
     b.direction=Vec3f(0, -1, 0);
 }
 
-int pause = 1;
-
-int ot = 1;
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
 void drawOctree(Octree* octree, float box_size){
@@ -1412,7 +1461,43 @@ void drawBalls(){
 		glPopMatrix();
 	}*/
 	
-}	
+}
+Ball *B=&ball1;
+char atribut='r';
+void handleKeypress3(unsigned char key, int x, int y) {
+  switch (key) {
+    case 27: //Escape key
+	    exit(0);
+    case 'm' :atribut='m';
+	      break;
+    case 'r' : atribut='r';
+	      break;
+   // case 'v' : glutKeyboardFunc(handleKeypress4);
+    case '+': if(atribut=='m'){
+		B->m+=0.1;
+		}else{
+		B->r+=0.1;
+		B->pos[1]=-BOX_SIZE/2+B->r;   
+		}
+	      cout<<"r:"<<B->r<<endl;
+	      cout<<"m:"<<B->m<<endl;
+	      break;
+    case '-': if(atribut=='m'){
+	    if(B->m>0.1)B->m-=0.1;
+	    }else{
+	    if(B->r>0.1)B->r-=0.1;
+	    B->pos[1]=-BOX_SIZE/2+B->r;   
+	    }
+	  cout<<"r:"<<B->r<<endl;
+	  cout<<"m:"<<B->m<<endl;
+	  break;
+    case 'b' :B = &ball2;
+	      break;
+    case 'q':  glutKeyboardFunc(handleKeypress2);
+  }
+    
+}
+
 void handleKeypress2(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
@@ -1423,6 +1508,21 @@ void handleKeypress2(unsigned char key, int x, int y) {
 			  delev=0;
 			  azim=55; 
 			  dazim=0;
+			   
+			  //ball 1
+			  ball1.m=0.2;
+			  ball1.r=1.5f; 
+			  ball1.pos=Vec3f(0,-BOX_SIZE/2+ ball1.r+10,0);
+			  //ball1.v=Vec3f(1,0,1);  
+			  ball1.v=Vec3f(0,0,0);  
+			  
+			  //ball 2
+			  ball2.r=0.6;
+			  ball2.m=1.5;
+			  ball2.pos=Vec3f(0,-BOX_SIZE/2+ball2.r+8,0);
+			  //ball2.v=Vec3f(2,0,-2);
+			  ball2.v=Vec3f(0,0,0);  
+			  
 			  init();
 			break;
 		case '2': selection=2;
@@ -1436,9 +1536,14 @@ void handleKeypress2(unsigned char key, int x, int y) {
 			  init();
 		      break;
 		case '0':
+			ball1.pos=Vec3f(-5,-BOX_SIZE/2+ ball1.r,-1);
+			ball1.v=Vec3f(1,0,1); 
+			ball2.pos=Vec3f(-5,-BOX_SIZE/2+ball2.r,3);
+			ball2.v=Vec3f(2,0,-2);
+			cout<<selection<<endl;
 			init();
 		      break;
-		case 'b': if(box==1)box=0;
+		case 'w': if(box==1)box=0;
 			  else box=1;
 ;
 			break;  
@@ -1467,8 +1572,9 @@ void handleKeypress2(unsigned char key, int x, int y) {
 		case 'o': if(ot == 1) ot=0;
 			  else ot = 1;
 			  break;
-	
-
+		case  'a': B = &ball1;	  
+			  glutKeyboardFunc(handleKeypress3);
+			  break;
 	}
 }	
 
@@ -1551,23 +1657,20 @@ void advanceAllBalls(float t, float &timeUntilUpdate) {
 }
 
 void advance2Balls(float t, float &timeUntilUpdate) {
-int error=0;
-    cout<<elev<<' '<<delev<<endl;
-    cout<<azim<<' '<<dazim<<endl;
+ 
   while (t > 0) {
 		if (timeUntilUpdate <= t) {
 			   pullBall(&ball1);
 			   pullBall(&ball2);
 			   move_ball(&ball1,t);
 			   move_ball(&ball2,t);
-	  
-	      if(check_collision(bp))collision3D(
-		      0, bp.bA->m, bp.bB->m, bp.bA->r, bp.bB->r, 
-		      bp.bA->pos[0],bp.bA->pos[1],bp.bA->pos[2], 
-		      bp.bB->pos[0],bp.bB->pos[1],bp.bB->pos[2] ,
+	      //if(check_collision(bp))elastic_3D(bp);
+	      if(check_collision(bp))collision2D(bp);
+	      
+	     /* if(check_collision(bp))collision3d(&bp,
 		      bp.bA->v[0],bp.bA->v[1],bp.bA->v[2],
-		      bp.bB->v[0],bp.bB->v[1],bp.bB->v[2], error);
-	  
+		      bp.bB->v[0],bp.bB->v[1],bp.bB->v[2]);
+	      */
 	   
 	   if(check_wall_collision(bw))ideal_responce(&bw);
            if(check_wall_collision(bw2))ideal_responce(&bw2);
@@ -1590,12 +1693,12 @@ void update(int value) {
     switch(selection){
       
       case 1:
-	   advance2Balls((float)TIMER_MS / 1000.0f, _timeUntilUpdate);
+	  if(!pause)advance2Balls((float)TIMER_MS / 1000.0f, _timeUntilUpdate);
 	break;
  
       case 2:
 
-	  advanceAllBalls((float)TIMER_MS / 1000.0f, _timeUntilUpdate);
+	  if(!pause)advanceAllBalls((float)TIMER_MS / 1000.0f, _timeUntilUpdate);
 	  
 	  _angle += (float)TIMER_MS / 100;
 	  if (_angle > 360) {
@@ -1607,7 +1710,7 @@ void update(int value) {
 	  
       case 3:
 	
-	advance(_balls, _octree, (float)TIMER_MS / 1000.0f, _timeUntilUpdate);
+	if(!pause)advance(_balls, _octree, (float)TIMER_MS / 1000.0f, _timeUntilUpdate);
 	
 	_angle += (float)TIMER_MS / 100;
 	if (_angle > 360) {
