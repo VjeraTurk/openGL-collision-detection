@@ -705,23 +705,31 @@ void elastic_3D(BallPair pair){
 }
 */
 
-void angleFree2D(BallPair pair){
+void angleFree3D(BallPair pair){
   Ball *b1=pair.bA;
   Ball *b2=pair.bB;
   
   float m1=b1->m;
   float m2=b2->m;
+  
   Vec3f v1=b1->v;
   Vec3f v2=b2->v;  
+  
   Vec3f v12=v1-v2;
-  Vec3f v21=v1-v2;
+  Vec3f v21=v2-v1;
   Vec3f pos12=b1->pos-b2->pos;
   Vec3f pos21=b2->pos-b1->pos;  
   
-  b1->v -= pos12*(v12.dot(pos12))*((2*m2)/(m1+m2));
-  cout<<v1[0]<<' '<<v1[1]<<' '<<v1[2]<<endl;
-  //b2->v -= pos21*v21.dot(pos21)*((2*m2)/(m1+m2));
+  float x12= pos12.magnitudeSquared();
+  float x21= pos21.magnitudeSquared();  
+ 
+  //b1->v -= pos12*(v12.dot(pos12)/x12)*((2*m2)/(m1+m2));
+  b1->v -= pos12*(v12.dot(pos12)/x12)*((2*m2)/(m1+m2));
   
+  cout<<v1[0]<<' '<<v1[1]<<' '<<v1[2]<<endl;
+  
+  b2->v -= pos21*(v21.dot(pos21)/x21)*((2*m1)/(m1+m2));
+  cout<<v2[0]<<' '<<v2[1]<<' '<<v2[2]<<endl;
 }
 void collision2D(BallPair pair){
 
@@ -1658,7 +1666,7 @@ void advance2Balls(float t, float &timeUntilUpdate) {
 			   pullBall(&ball2);
 			   move_ball(&ball1,t);
 			   move_ball(&ball2,t);
-	      if(check_collision(bp))angleFree2D(bp);
+	      if(check_collision(bp))angleFree3D(bp);
 	     //if(check_collision(bp))collision2D(bp);
 	   /*   
 	      if(check_collision(bp))collision3D(bp,
