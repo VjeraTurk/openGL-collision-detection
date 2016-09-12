@@ -29,7 +29,8 @@ bool box = 1;
 bool pause = 1;
 /** ot = true Oktalno stablo je prikazano kao skup podjeljenih prostora*/
 bool ot = 1;
-
+/**dimenzija u kojoj se promatra sudar (ako pozicije dozvoljavaju)*/
+int d = 2;
 /**Faktor prozirnosti*/
 const float ALPHA = 0.6f;
 /**Gravitacijska konstanta*/
@@ -1002,26 +1003,7 @@ void applyGravity(vector<Ball*> &balls) {
 		ball->v -= Vec3f(0, GRAVITY * TIME_BETWEEN_UPDATES, 0);
 	}
 }
-//Returns whether two balls are colliding
-bool testBallBallCollision(Ball* b1, Ball* b2) {
-	//Check whether the balls are close enough
-	
-	float r = b1->r + b2->r;
-	if ((b1->pos - b2->pos).magnitudeSquared() < r * r) {
-		//Check whether the balls are moving toward each other
-		Vec3f netVelocity = b1->v - b2->v;
-		Vec3f displacement = b1->pos - b2->pos;
-		
-		if(netVelocity.dot(displacement)<0){
-		b1->t_red=RED;
-		b2->t_red=RED;
-		} 
-		
-		return netVelocity.dot(displacement) < 0;
-	}
-	
-	else return false;
-}
+
 //Handles all ball-ball collisions
 void handleBallBallCollisions(vector<Ball*> &balls, Octree* octree) {
 	vector<BallPair> bps;
@@ -1130,9 +1112,7 @@ void drawBalls(){
 	}
 }
 Ball *B=&ball1;
-char atribut='r';
-
-float *a=&B->m;
+float *a=&B->r;
 Vec3f *v=&B->pos;
 
 void handleKeypress(unsigned char key, int x, int y) {
@@ -1175,8 +1155,8 @@ void handleKeypress(unsigned char key, int x, int y) {
 	      // B->pos[1]=-BOX_SIZE/2+B->r;   
 	      cout<<"r:"<<B->r<<endl;
 	      cout<<"m:"<<B->m<<endl;
-	      cout<<"v:"<<B->v[0]<<B->v[1]<<B->v[2]<<endl;
-	      cout<<"pos:"<<B->pos[0]<<B->pos[1]<<B->pos[2]<<endl;
+	      cout<<"v:"<<B->v[0]<<" "<<B->v[1]<<" "<<B->v[2]<<endl;
+	      cout<<"pos:"<<B->pos[0]<<" "<<B->pos[1]<<" "<<B->pos[2]<<endl;
 	      break;
 	      
     case 'b' :
@@ -1184,7 +1164,11 @@ void handleKeypress(unsigned char key, int x, int y) {
 	      cout<<"q to return to selection menue"<<endl;
 	      B = &ball2;
 	      break;
-    case 'q':  glutKeyboardFunc(handleKeypress2);
+    case 'q': 
+	      cout<<"q"<<endl;
+	      glutKeyboardFunc(handleKeypress2);
+	      break;
+
   }
     
 }
@@ -1217,202 +1201,204 @@ void handleKeypress3(unsigned char key, int x, int y){
 void handleKeypress2(unsigned char key, int x, int y) {
 
     switch (key) {
-		case 27: //Escape key
-			exit(0);
-		case '1': selection=1;
-			  elev=14.6;
-			  delev=0;
-			  azim=55; 
-			  dazim=0;
-			   
-			  //ball 1
-			  ball1.m=0.2;
-			  ball1.r=1.5f; 
-			  ball1.pos=Vec3f(0,-BOX_SIZE/2+ ball1.r+10,0);
-			  //ball1.v=Vec3f(1,0,1);  
-			  ball1.v=Vec3f(0,0,0);  
-			  
-			  //ball 2
-			  ball2.r=0.6;
-			  ball2.m=1.5;
-			  ball2.pos=Vec3f(0,-BOX_SIZE/2+ball2.r+8,0);
-			  //ball2.v=Vec3f(2,0,-2);
-			  ball2.v=Vec3f(0,0,0);  
-			  
-			  init();
-			break;
-		case '2': selection=2;
-			  elev=0;
-			  delev=0;
-			  azim=0; 
-			  dazim=0;
-  			init();
-			break;
-		case '3': selection=3;
-			  init();
-		      break;
-		case '0':
-			ball1.pos=Vec3f(-5,-BOX_SIZE/2+ ball1.r,-1);
-			ball1.v=Vec3f(1,0,1); 
-			ball2.pos=Vec3f(-5,-BOX_SIZE/2+ball2.r,3);
-			ball2.v=Vec3f(2,0,-2);
-			
-			cout<<selection<<endl;
-			init();
-		      break;
-		case 'w': if(box==1)box=0;
-			  else box=1;
+	  case 27: //Escape key
+		  exit(0);
+	  case '1': selection=1;
+		    elev=14.6;
+		    delev=0;
+		    azim=55; 
+		    dazim=0;
+		      
+		    //ball 1
+		    ball1.m=0.2;
+		    ball1.r=1.5f; 
+		    ball1.pos=Vec3f(0,-BOX_SIZE/2+ ball1.r+10,0);
+		    //ball1.v=Vec3f(1,0,1);  
+		    ball1.v=Vec3f(0,0,0);  
+		    
+		    //ball 2
+		    ball2.r=0.6;
+		    ball2.m=1.5;
+		    ball2.pos=Vec3f(0,-BOX_SIZE/2+ball2.r+8,0);
+		    //ball2.v=Vec3f(2,0,-2);
+		    ball2.v=Vec3f(0,0,0);  
+		    
+		    init();
+		  break;
+	  case '2': selection=2;
+		    elev=0;
+		    delev=0;
+		    azim=0; 
+		    dazim=0;
+		  init();
+		  break;
+	  case '3': selection=3;
+		    init();
+		break;
+	  case '0':
+		  ball1.pos=Vec3f(-5,-BOX_SIZE/2+ ball1.r,-1);
+		  ball1.v=Vec3f(1,0,1); 
+		  ball2.pos=Vec3f(-5,-BOX_SIZE/2+ball2.r,3);
+		  ball2.v=Vec3f(2,0,-2);
+		  
+		  cout<<selection<<endl;
+		  init();
+		break;
+	  case 'w': if(box==1)box=0;
+		    else box=1;
 ;
-			break;  
-		case 'c': central++;
-			  if(central>3)central=1;
-			  init_central();
-			  break;
-			//Add balls with a random position, velocity, radius, and color
-		case ' ': 
-			if(selection==1)break;	
-			     AllBalls=create_list(NUM_BALLS+=PLUS_BALL);
-			     cout<<NUM_BALLS<<endl;
-			     //break;			  
-			if(selection==2){cout<<NUM_BALLS<<endl;}
- 
-			for(int i = 0; i < 20; i++) {
-				Ball* ball = new Ball();
-				ball->pos = Vec3f(8 * randomFloat() - 4,
-								  8 * randomFloat() - 4,
-								  8 * randomFloat() - 4);
-				ball->v = Vec3f(8 * randomFloat() - 4,
-								8 * randomFloat() - 4,
-								8 * randomFloat() - 4);
-				ball->r = 0.1f * randomFloat() + 0.1f;
-				ball->m = 0.1f * randomFloat() + 0.1f;
-				_balls.push_back(ball);
-				_octree->add(ball);
-			} 
-			if(selection==3)cout<<_octree->numBalls<<endl;
-			break;
-			
-		case 'p': if(pause == 1) pause = 0;
-			  else if(pause==0) pause = 1;
-			  break;
-			  
-		case 'o': 
-			    if(ot == 1) ot=0;
-			    else ot = 1;
-			    break;
-		case  'a': 
-			  cout<<"RED BALL pick atribute m-mass, r-radius, v-velocity, p- position"<<endl;
-			  cout<<"q to return to selection menue"<<endl;
-			  B = &ball1;	  
-			  glutKeyboardFunc(handleKeypress);
-			  break;
+		  break;  
+	  case 'c': central++;
+		    if(central>3)central=1;
+		    init_central();
+		    break;
+		  //Add balls with a random position, velocity, radius, and color
+	  case ' ': 
+		  if(selection==1)break;	
+			AllBalls=create_list(NUM_BALLS+=PLUS_BALL);
+			cout<<NUM_BALLS<<endl;
+			//break;			  
+		  if(selection==2){cout<<NUM_BALLS<<endl;}
+
+		  for(int i = 0; i < 20; i++) {
+			  Ball* ball = new Ball();
+			  ball->pos = Vec3f(8 * randomFloat() - 4,
+							    8 * randomFloat() - 4,
+							    8 * randomFloat() - 4);
+			  ball->v = Vec3f(8 * randomFloat() - 4,
+							  8 * randomFloat() - 4,
+							  8 * randomFloat() - 4);
+			  ball->r = 0.1f * randomFloat() + 0.1f;
+			  ball->m = 0.1f * randomFloat() + 0.1f;
+			  _balls.push_back(ball);
+			  _octree->add(ball);
+		  } 
+		  if(selection==3)cout<<_octree->numBalls<<endl;
+		  break;
+		  
+	  case 'p': if(pause == 1) pause = 0;
+		    else if(pause==0) pause = 1;
+		    break;
+		    
+	  case 'o': 
+		      if(ot == 1) ot=0;
+		      else ot = 1;
+		      break;
+	  case  'a': 
+		    cout<<"RED BALL pick atribute m-mass, r-radius, v-velocity, p- position"<<endl;
+		    cout<<"q to return to selection menue"<<endl;
+		    B = &ball1;	  
+		    glutKeyboardFunc(handleKeypress);
+		    break;
+	  case 'f' : 
+		    d=3;
+		    cout<<d<<endl;
+	      
+		    break;
+	  case 'd' : 
+		    d=2;
+		    cout<<d<<endl;
+		    break;
+	  case 't' : 
+		    d=32;
+		    cout<<d<<endl;
+		    break;
 	}
 }	
-
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
     glMatrixMode(GL_MODELVIEW);
 
     glLoadIdentity();
-   // glTranslatef(0.0, 0.0, -(dis+ddis));
-
+    
     glTranslatef(0.0, 0.0, -25.0f);
-
     glRotated(elev+delev, 1.0, 0.0, 0.0);
     glRotated(azim+dazim, 0.0, 1.0, 0.0);
 
     Lighting(BOX_SIZE);
     glShadeModel(GL_SMOOTH);
     
-    glColor3f(1,1,1);
-   // drawCube(BOX_SIZE);
-
- //   InsertObject(&root,&ball1);
-//    InsertObject(&root,&ball2);
-       
+    glColor3f(1,1,1); 
 
      switch(selection){
-      
+    
       case 1 :   
-	    elastic_collision();
-		 break;
+		elastic_collision();
+		break;
       case 2 : 
-	      //glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
-	      if(box)drawCube(BOX_SIZE);
-	      else glutWireCube(BOX_SIZE);
-	      multiple_balls_collision();
+		//glRotatef(-_angle, 0.0f, 1.0f, 0.0f); //odkomentirati za rotiranje
+		if(box)drawCube(BOX_SIZE);
+		else glutWireCube(BOX_SIZE);
+		multiple_balls_collision();
 		break;	
       case 3 : 
-	    	//glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
-	
-		if(box==1){
-		  drawCube(BOX_SIZE);  
-		} else glutWireCube(BOX_SIZE);
+	    	//glRotatef(-_angle, 0.0f, 1.0f, 0.0f);//odkomentirati za rotiranje
+		if(box==1)drawCube(BOX_SIZE);  
+		else glutWireCube(BOX_SIZE);
 		
-		if(ot==1){
-		drawOctree(_octree, BOX_SIZE);  
-		}
-		
+		if(ot==1)drawOctree(_octree, BOX_SIZE);  
 		drawBalls();
-
-	  break;
+		break;
     }
+    
     glutSwapBuffers();
 }
 
 
 void advanceAllBalls(float t, float &timeUntilUpdate) {
     while (t > 0) {
-      if (timeUntilUpdate <= t) {
-	      applyGravity(AllBalls);
-	      moveAllBalls(AllBalls, timeUntilUpdate);
-	      bruteForce(AllBalls);
-	      cout<<num_tests_list<<endl;
-	      num_tests_list=0;
-	      ballsWallsCollisions(AllBalls);
-	      t -= timeUntilUpdate;
-	      timeUntilUpdate = TIME_BETWEEN_UPDATES;
-      }
-      else {
-	      moveAllBalls(AllBalls, t);
-	      timeUntilUpdate -= t;
-	      t = 0;
-      }
-    }
+	if (timeUntilUpdate <= t) {
+		applyGravity(AllBalls);
+		moveAllBalls(AllBalls, timeUntilUpdate);
+		bruteForce(AllBalls);
+		cout<<num_tests_list<<endl;
+		num_tests_list=0;
+		ballsWallsCollisions(AllBalls);
+		
+		t -= timeUntilUpdate;
+		timeUntilUpdate = TIME_BETWEEN_UPDATES;
+	}
+	else {
+		moveAllBalls(AllBalls, t);
+		timeUntilUpdate -= t;
+		t = 0;
+	}
+     }
 }
 
 void advance2Balls(float t, float &timeUntilUpdate) {
  
   while (t > 0) {
-		if (timeUntilUpdate <= t) {
-			   pullBall(&ball1);
-			   pullBall(&ball2);
-			   move_ball(&ball1,t);
-			   move_ball(&ball2,t);
-	      if(check_collision(bp))angleFreeCollision3D(bp);
-	     //if(check_collision(bp))collision2D(bp);
-	   /*   
-	      if(check_collision(bp))collision3D(bp,
-		      bp.bB->v[0],bp.bB->v[1],bp.bB->v[2]);
-	     */ 
-	   
-	   if(check_wall_collision(bw))ideal_responce(&bw);
-           if(check_wall_collision(bw2))ideal_responce(&bw2);
-	
-			t -= timeUntilUpdate;
-			timeUntilUpdate = TIME_BETWEEN_UPDATES;
-		}
-		else {
-			//move_ball(&ball1,t);
-			//move_ball(&ball2,t);
-	  		timeUntilUpdate -= t;
-			t = 0;
-		}
+	if (timeUntilUpdate <= t) {
+		  
+	  pullBall(&ball1);
+	  pullBall(&ball2);
+	  move_ball(&ball1,timeUntilUpdate);
+	  move_ball(&ball2,timeUntilUpdate);
+	  
+	 
+	  
+	  if(d==2 && bp.bA->pos[1]-bp.bA->r==0 && bp.bA->pos[1]-bp.bA->r==0){
+	   if(check_collision(bp))collision2D(bp); 
+	  }else if(d==3 && check_collision(bp))angleFreeCollision3D(bp);
+	  else if(check_collision(bp))collision3D(bp,bp.bB->v[0],bp.bB->v[1],bp.bB->v[2]);
+	  
+	  if(check_wall_collision(bw))ideal_responce(&bw);
+	  if(check_wall_collision(bw2))ideal_responce(&bw2);
+
+	  t -= timeUntilUpdate;
+	  timeUntilUpdate = TIME_BETWEEN_UPDATES;
 	}
+	else {
+		move_ball(&ball1,t);
+		move_ball(&ball2,t);
+		timeUntilUpdate -= t;
+		t = 0;
+	}
+   }
 }
 
 
@@ -1432,7 +1418,6 @@ void update(int value) {
 	  if (_angle > 360) {
 		_angle -= 360;
 	  }
-	
 	 
 	  break;
 	  
