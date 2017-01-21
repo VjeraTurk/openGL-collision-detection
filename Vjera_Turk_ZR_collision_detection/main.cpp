@@ -36,7 +36,7 @@ const float ALPHA = 0.6f;
 /**Gravitacijska konstanta*/
 const float GRAVITY =  9.80665f;
 /**Količina vremena između svakog ponovnog detektiranja sudare i simuliranja djelovanje gravitacije*/
-const float TIME_BETWEEN_UPDATES = 0.01f;
+const float TIME_BETWEEN_UPDATES = 0.001f;
 /**Broj milisekundi tajmera*/
 const int TIMER_MS = 25; 
 
@@ -56,8 +56,8 @@ const int TIMER_MS = 25;
   
   void update(int value);
   void display();
-/** @brief Funkcija crta kutiju veličine stranice box_size, mijanja boju zidova ovisno o sudaru loptica s njima
-    @param box_size
+/** Funkcija crta kutiju veličine stranice box_size, mijanja boju zidova ovisno o sudaru loptica s njima
+ 
 */  
   void drawCube(float box_size);
   float randomFloat();
@@ -65,8 +65,7 @@ const int TIMER_MS = 25;
   void handleKeypress(unsigned char key, int x, int y);
   void handleKeypress2(unsigned char key, int x, int y);
   void handleKeypress3(unsigned char key, int x, int y);
-/** @brief Funkcija crta lopticu pomoću njenih parametara r i pos
-    @param ball
+/**  Funkcija crta lopticu pomoću njenih parametara r i pos
 */    
   void drawBall(Ball ball);
   void drawBigBall(Ball ball);
@@ -94,8 +93,8 @@ const int TIMER_MS = 25;
 //////////////////////////////////////////////////////////////
 //selection 3 - Octree 
   const int MAX_OCTREE_DEPTH = 6;
-  const int MIN_BALLS_PER_OCTREE = 3;
-  const int MAX_BALLS_PER_OCTREE = 6;
+  const int MIN_BALLS_PER_OCTREE = 6;
+  const int MAX_BALLS_PER_OCTREE = 12;
 
 class Octree {
       public:
@@ -1484,6 +1483,3 @@ int main(int argc,char **argv)
 
     return(0);
 }
-
-
-

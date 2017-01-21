@@ -60,7 +60,7 @@ void drawAxes(void)
 
 //const float GRAVITY =  9.80665f;
 const float GRAVITY =  8.0f;
-const float BOX_SIZE = 12.0f; //The length of one side of the box
+const float BOX_SIZE = 15.0f; //The length of one side of the box
 //The amount of time between each time that we handle collisions and apply the
 //effects of gravity
 const float TIME_BETWEEN_UPDATES = 0.01f;
@@ -608,6 +608,29 @@ void applyGravity(vector<Ball*> &balls) {
 
 //Returns whether two balls are colliding
 //A1
+void angleFreeCollision3D(BallPair pair){
+
+    Ball *b1=pair.ball1;
+    Ball *b2=pair.ball2;
+
+    float m1=b1->m;
+    float m2=b2->m;
+
+    Vec3f v1=b1->v;
+    Vec3f v2=b2->v;  
+
+    Vec3f v12=v1-v2;
+    Vec3f v21=v2-v1;
+    Vec3f pos12=b1->pos-b2->pos;
+    Vec3f pos21=b2->pos-b1->pos;  
+
+    float x12= pos12.magnitudeSquared();
+    float x21= pos21.magnitudeSquared();  
+
+    b1->v -= pos12*(v12.dot(pos12)/x12)*((2*m2)/(m1+m2)); 
+    b2->v -= pos21*(v21.dot(pos21)/x21)*((2*m1)/(m1+m2));
+}
+
 bool testBallBallCollision(Ball* b1, Ball* b2) {
 	//Check whether the balls are close enough
 	float r = b1->r + b2->r;
@@ -646,9 +669,11 @@ void handleBallBallCollisions(vector<Ball*> &balls, Octree* octree) {
 	
 		if (testBallBallCollision(b1, b2)) {
 			//Make the balls reflect off of each other
-			Vec3f displacement = (b1->pos - b2->pos).normalize();
-			b1->v -= 2 * displacement * b1->v.dot(displacement);
-			b2->v -= 2 * displacement * b2->v.dot(displacement);
+			//Vec3f displacement = (b1->pos - b2->pos).normalize();
+			//b1->v -= 2 * displacement * b1->v.dot(displacement);
+			//b2->v -= 2 * displacement * b2->v.dot(displacement);
+			angleFreeCollision3D(bp);
+		  
 		}
 		
 	}
@@ -676,7 +701,6 @@ Vec3f wallDirection(Wall wall) {
 }
 */
 //Returns whether a ball and a wall are colliding
-//A2
 bool testBallWallCollision(Ball* ball, Wall* wall) {
 	Vec3f dir = wall->direction;
 	//Check whether the ball is far enough in the "dir" direction, and whether
@@ -692,9 +716,7 @@ bool testBallWallCollision(Ball* ball, Wall* wall) {
   
 	
 }
-
 //Handles all ball-wall collisions
-//A4
 void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 	
 	vector<BallWallPair> bwps;
@@ -721,10 +743,10 @@ void handleBallWallCollisions(vector<Ball*> &balls, Octree* octree) {
 //TIME_BETWEEN_UPDATES seconds.
 void performUpdate(vector<Ball*> &balls, Octree* octree) {
 	
-	applyGravity(balls);
+	//applyGravity(balls);
 	handleBallBallCollisions(balls, octree);
 	handleBallWallCollisions(balls, octree);
-	cout<<(octree->numBalls)<<endl;
+	//cout<<(octree->numBalls)<<endl;
 }
 
 //Advances the state of the balls by t.  timeUntilUpdate is the amount of time
@@ -777,14 +799,15 @@ void handleKeypress(unsigned char key, int x, int y) {
 			//Add balls with a random position, velocity, radius, and color
 			for(int i = 0; i < 100; i++) {
 				Ball* ball = new Ball();
-				ball->pos = Vec3f(8 * randomFloat() - 4,
-								  8 * randomFloat() - 4,
-								  8 * randomFloat() - 4);
+				//ball->pos = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 8 * randomFloat() - 4);
+				ball->pos = Vec3f(8 * randomFloat() - 4,8 * randomFloat() - 4, 0);
 				ball->v = Vec3f(8 * randomFloat() - 4,
 								8 * randomFloat() - 4,
-								8 * randomFloat() - 4);
+								0);
 				ball->r = 0.1f * randomFloat() + 0.1f;
-				ball->m = 0.1f * randomFloat() + 0.1f;
+				ball->m = ball->r;
+				ball->color = Vec3f(0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f, 0.6f * randomFloat() + 0.2f);
+				
 				_balls.push_back(ball);
 				_octree->add(ball);
 			} break;
@@ -835,7 +858,7 @@ void drawBalls(){
 		Ball* ball = _balls[i];
 		glPushMatrix();
 		glTranslatef(ball->pos[0], ball->pos[1], ball->pos[2]);
-		
+		/*
 		if(ball->t_red){
 		
 		  glColor3f(1, (-ball->t_red/50)+1,(-ball->t_red/50)+1);  
@@ -845,7 +868,9 @@ void drawBalls(){
 		  
 		glColor3f(1, 1, 1);
 		  
-		}	//glColor3f(ball->color[0], ball->color[1], ball->color[2]);
+		}	
+		*/
+		glColor3f(ball->color[0], ball->color[1], ball->color[2]);
 		
 		glutSolidSphere(ball->r, 12, 12); //Draw a sphere
 		glPopMatrix();
@@ -884,16 +909,16 @@ void drawScene() {
 	glTranslatef(0.0f, 0.0f, -25.0f);
 	
 	Lightning(); //svjetlo ne rotira
-	glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
+	//glRotatef(-_angle, 0.0f, 1.0f, 0.0f);
 	//Lightning(); //svjetlo rotira
 	
 	glShadeModel(GL_SMOOTH);
 	
 	if(show_walls==1){
-	  drawCube(BOX_SIZE);  
+	 // drawCube(BOX_SIZE);  
 	}
 	if(ot==1){
-	drawOctree(_octree, box_size);  
+	//drawOctree(_octree, box_size);  
 	}
 	drawBalls();
 	//uncomment for Transparent Cube:
@@ -929,6 +954,53 @@ void update(int value) {
 	glutTimerFunc(TIMER_MS, update, 0);
 }
 
+int mode;
+double beginx, beginy;
+double dis = 10.0, azim = 0.0, elev = 0.0;
+double ddis = 0.0, dazim = 0.0, delev = 0.0;
+
+void cb_mouse(int _b, int _s, int _x, int _y)
+{
+  if (_s == GLUT_UP)
+  {
+    dis += ddis;
+    if (dis < .1) dis = .1;
+    azim += dazim;
+    elev += delev;
+    ddis = 0.0;
+    dazim = 0.0;
+    delev = 0.0;
+    return;
+  }
+
+  if (_b == GLUT_RIGHT_BUTTON)
+  {
+    mode = 0;
+    beginy = _y;
+    return;
+  }
+  else
+  {
+    mode = 1;
+    beginx = _x;
+    beginy = _y;
+  }
+}
+void cb_motion(int _x, int _y)
+{
+  if (mode == 0)
+  {
+    ddis = dis * (double)(_y - beginy)/200.0;
+  }
+  else
+  {
+    dazim = (_x - beginx)/5;
+    delev = (_y - beginy)/5;      
+  }
+  
+  glutPostRedisplay();
+}
+
 int main(int argc, char** argv) {
 	srand((unsigned int)time(0)); //Seed the random number generator
 	
@@ -936,9 +1008,10 @@ int main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowPosition(500, 100);
 	
-	glutInitWindowSize(600, 600);
-	
+	glutInitWindowSize(800, 800);
+	glutFullScreen();
 	glutCreateWindow("Collision Detection");
+	
 	initRendering();
 	
 	//walls
@@ -955,6 +1028,8 @@ int main(int argc, char** argv) {
 	
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
+	glutMouseFunc(cb_mouse);
+	glutMotionFunc(cb_motion);
 	glutReshapeFunc(handleResize);
 	
 	glutTimerFunc(TIMER_MS, update, 0);
